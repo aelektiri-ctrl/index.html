@@ -610,6 +610,7 @@ button:disabled { opacity: 0.6; cursor: wait; }
       <button class="nav-tab" id="tab-admin" onclick="switchView('admin')">Administration</button>
     </nav>
     <div class="spacer"></div>
+    <button class="btn btn-outline" onclick="inviteFriends()">🎁 Inviter</button>
     <button class="btn btn-outline" onclick="openInbox()">Messagerie (<span id="msgCount">0</span>)</button>
     <button class="btn btn-outline" id="accountBtn" onclick="openAccount()">Se connecter</button>
     <button class="btn btn-primary" onclick="openPostModal()">+ Déposer une annonce</button>
@@ -2084,14 +2085,29 @@ function renderRadarSaved() {
 }
 
 /* ===== Partage et signalement ===== */
+const SITE_URL = 'https://a-vos-trocs.vercel.app/';
+function shareLink(text, url, title) {
+  if (navigator.share) navigator.share({ title: title, text: text, url: url }).catch(() => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + url).then(() => notify('Lien copié : collez-le dans Facebook, Snap, TikTok, WhatsApp…'));
+  else notify('Partage indisponible sur cet appareil.');
+}
 function shareItem(id) {
   const x = listings.find(l => l.id === id);
   if (!x) return;
-  const text = `${x.title} — ${x.price} € sur À Vos Trocs`;
-  if (navigator.share) navigator.share({ title: x.title, text: text, url: location.href }).catch(() => {});
-  else if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + location.href).then(() => notify('Lien copié dans le presse-papiers.'));
-  else notify('Partage indisponible sur cet appareil.');
+  shareLink(`🔁 ${x.title} — ${x.price} € sur À Vos Trocs. Échange 100 % troc ou vente avec soulte !`, SITE_URL + '?a=' + encodeURIComponent(id), x.title);
 }
+function inviteFriends() {
+  shareLink('🔁 Rejoins À Vos Trocs : échange tes objets 100 % troc, sans argent, ou vends avec soulte. Gratuit, entre membres !', SITE_URL + '?ref=invite', 'À Vos Trocs');
+}
+(function openSharedListing() {
+  const id = new URLSearchParams(location.search).get('a');
+  if (!id) return;
+  let tries = 0;
+  const t = setInterval(() => {
+    if (typeof listings !== 'undefined' && listings.length) { clearInterval(t); try { openDetail(id); } catch (e) {} }
+    else if (++tries > 40) clearInterval(t);
+  }, 300);
+})();
 
 async function reportItem(id) {
   if (!requireAuth(() => reportItem(id), 'signaler une annonce')) return;
