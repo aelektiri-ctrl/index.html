@@ -2226,7 +2226,30 @@ function renderAdmin() {
       <div class="adm-head"><h3>Tarifs en vigueur</h3></div>
       ${adminTable(['Option', 'Prix'], [['Photos (jusqu\'à ' + FREE_PHOTOS + ')', 'Gratuit']].concat(PHOTO_PACKS.map(p => [p.label, fmtEuro(p.price)]), [['Boost 48 h', fmtEuro(BOOST_PRICE)]]))}
     </div>
+    <div class="adm-card">
+      <div class="adm-head"><h3>Changer le code administrateur</h3></div>
+      <form onsubmit="changeAdminCode(event)">
+        <div class="form-row">
+          <div class="form-group"><label>Nouveau code (8 caractères min.)</label><input class="form-control" type="text" name="code" required minlength="8" autocomplete="off"></div>
+          <div class="form-group" style="align-self:end;"><button type="submit" class="btn btn-primary" style="width:100%;">Enregistrer</button></div>
+        </div>
+      </form>
+    </div>
   `;
+}
+
+async function changeAdminCode(e) {
+  e.preventDefault();
+  const form = e.target;
+  const code = String(new FormData(form).get('code')).trim();
+  if (code.length < 8) { notify('Le code doit contenir au moins 8 caractères.'); return; }
+  try {
+    await db('rpc/admin_set_code', { method: 'POST', body: { p_code: code } });
+    form.reset();
+    notify('Code administrateur modifié. Gardez-le précieusement.');
+  } catch (err) {
+    notify(err.message);
+  }
 }
 
 async function adminDeleteListing(id) {
