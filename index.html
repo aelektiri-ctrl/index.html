@@ -624,6 +624,7 @@ button:disabled { opacity: 0.6; cursor: wait; }
       <span class="hero-tag">Économie Circulaire • Troc Direct • Achat Sécurisé</span>
       <h1>Échangez sans argent, ou <em>vendez et complétez en euros.</em></h1>
       <p>Deux espaces bien séparés : l'échange 100 % troc, à valeur équitable et sans un centime, et l'espace vente & soulte pour tout ce qui implique de l'argent.</p>
+      <div id="founderBanner" style="background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.3); border-radius:12px; padding:10px 14px; margin-bottom:18px; max-width:560px; font-size:14px;"></div>
       <div class="hero-actions">
         <button class="btn btn-primary" onclick="switchView('troc')">Espace 100 % troc</button>
         <button class="btn btn-outline" style="background:rgba(255,255,255,0.12); color:#fff; border-color:rgba(255,255,255,0.3);" onclick="switchView('argent')">Espace vente & soulte</button>
@@ -1282,6 +1283,16 @@ async function loadData() {
     loadError = true;
   }
   renderCurrentView();
+  renderFounderBanner();
+}
+
+function renderFounderBanner() {
+  const el = $('founderBanner');
+  if (!el) return;
+  const left = Math.max(0, FOUNDER_LIMIT - Object.keys(profiles).length);
+  if (isFounder()) el.innerHTML = `🏅 <strong>Vous êtes membre fondateur</strong> : ${FOUNDER_PHOTOS} photos gratuites par annonce, pour toujours. Merci de lancer l'aventure !`;
+  else if (left > 0) el.innerHTML = `🎁 <strong>Offre de lancement</strong> : les ${FOUNDER_LIMIT} premiers membres ont ${FOUNDER_PHOTOS} photos gratuites par annonce au lieu de ${FREE_PHOTOS}. <strong>Plus que ${left} place${left > 1 ? 's' : ''}.</strong>`;
+  else el.style.display = 'none';
 }
 
 function voteStats(id) {
@@ -1620,7 +1631,15 @@ const PHOTO_PACKS = [
   { size: 10, price: 3.99, label: 'Forfait 10 photos' }
 ];
 const BOOST_PRICE = 2.90;
-const photoPackFor = n => n <= FREE_PHOTOS ? null : PHOTO_PACKS.find(p => n <= p.size) || PHOTO_PACKS[PHOTO_PACKS.length - 1];
+const FOUNDER_LIMIT = 100, FOUNDER_PHOTOS = 10;
+const founderCount = () => Math.min(FOUNDER_LIMIT, Object.keys(profiles).length);
+const isFounder = () => {
+  if (!currentUser) return false;
+  const ids = Object.values(profiles).sort((a, b) => a.created_at < b.created_at ? -1 : 1).slice(0, FOUNDER_LIMIT).map(x => x.id);
+  return ids.includes(currentUser.id);
+};
+const freePhotos = () => isFounder() ? FOUNDER_PHOTOS : FREE_PHOTOS;
+const photoPackFor = n => n <= freePhotos() ? null : PHOTO_PACKS.find(p => n <= p.size) || PHOTO_PACKS[PHOTO_PACKS.length - 1];
 
 function openPostModal(defaultMode = 'TROC') {
   if (!requireAuth(() => openPostModal(defaultMode), 'publier une annonce')) return;
@@ -1645,7 +1664,7 @@ function updatePhotoPack() {
   const pack = photoPackFor(Math.min(n, 10));
   const tarifs = PHOTO_PACKS.map(p => `${p.label} : ${fmtEuro(p.price)}`).join(' • ');
   let msg;
-  if (!n) msg = `Jusqu'à ${FREE_PHOTOS} photos gratuites. Au-delà : ${tarifs}.`;
+  if (!n) msg = `Jusqu'à ${freePhotos()} photos gratuites${isFounder() ? ' (avantage membre fondateur 🏅)' : ''}. Au-delà : ${tarifs}.`;
   else if (!pack) msg = `${n} photo${n > 1 ? 's' : ''} : gratuit.`;
   else if (n > 10) msg = `10 photos maximum : seules les 10 premières seront conservées. ${pack.label} requis (${fmtEuro(pack.price)}).`;
   else msg = `${n} photos : ${pack.label} requis (${fmtEuro(pack.price)}).`;
