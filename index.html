@@ -631,6 +631,17 @@ button:disabled { opacity: 0.6; cursor: wait; }
       </div>
     </section>
 
+    <section id="sponsorBox" style="border:1px dashed var(--border); border-radius:16px; padding:18px; margin-bottom:24px; background:var(--surface-2);">
+      <strong style="font-size:15px;">📣 Espace sponsors</strong>
+      <p style="font-size:13px; color:var(--muted); margin:6px 0 12px;">Votre commerce ou service local ici, vu par tous les membres. Laissez vos coordonnées, on vous répond avec les tarifs.</p>
+      <form onsubmit="submitSponsor(event)" style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input class="form-control" name="name" placeholder="Votre nom / société" required minlength="2" maxlength="120" style="flex:1; min-width:150px;">
+        <input class="form-control" name="contact" placeholder="E-mail ou téléphone" required minlength="5" maxlength="160" style="flex:1; min-width:150px;">
+        <input class="form-control" name="message" placeholder="Votre projet (facultatif)" maxlength="1000" style="flex:2; min-width:180px;">
+        <button class="btn btn-primary" type="submit">Envoyer</button>
+      </form>
+    </section>
+
     <div class="tools-grid">
       <div class="tool-box">
         <div>
@@ -831,7 +842,7 @@ button:disabled { opacity: 0.6; cursor: wait; }
     <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface-2); padding:12px; border-radius:10px; margin-bottom:16px;">
       <div>
         <strong style="font-size:13px; color:var(--green);">Booster la visibilité en tête de liste</strong>
-        <div style="font-size:12px; color:var(--muted);">Badge prioritaire pendant 48 heures</div>
+        <div style="font-size:12px; color:var(--muted);">Badge prioritaire pendant 48 heures • 0,99 €</div>
       </div>
       <input type="checkbox" name="boost" style="width:18px; height:18px;">
     </div>
@@ -1630,7 +1641,9 @@ const PHOTO_PACKS = [
   { size: 5, price: 1.99, label: 'Forfait 5 photos' },
   { size: 10, price: 3.99, label: 'Forfait 10 photos' }
 ];
-const BOOST_PRICE = 2.90;
+const BOOST_PRICE = 0.99;
+const BOOST_WEEK_PRICE = 2.99;
+const TROC_FEE = 1.99; // frais de validation d'un échange (offerts aux 100 fondateurs)
 const FOUNDER_LIMIT = 100, FOUNDER_PHOTOS = 10;
 const founderCount = () => Math.min(FOUNDER_LIMIT, Object.keys(profiles).length);
 const isFounder = () => {
@@ -1934,7 +1947,13 @@ async function decideOffer(id, accept) {
         ? { status: 'Acceptée', code: String(Math.floor(100000 + Math.random() * 900000)) }
         : { status: 'Refusée' }
     });
-    notify(accept ? 'Proposition acceptée. Code de remise TrocPass généré.' : 'Proposition refusée.');
+    if (accept) {
+      const founder = isFounder();
+      try {
+        await db('payments', { method: 'POST', body: { type: 'Frais de validation troc', amount: founder ? 0 : TROC_FEE, status: founder ? 'Offert (fondateur)' : 'À encaisser' } });
+      } catch {}
+    }
+    notify(accept ? 'Proposition acceptée. Code de remise TrocPass généré.' + (isFounder() ? ' Frais de validation offerts (membre fondateur 🏅).' : ' Frais de validation : ' + fmtEuro(TROC_FEE) + '.') : 'Proposition refusée.');
     await loadData();
     renderInbox();
   } catch (err) {
@@ -2128,6 +2147,16 @@ function inviteFriends() {
   }, 300);
 })();
 
+async function submitSponsor(e) {
+  e.preventDefault();
+  const f = e.target, fd = new FormData(f);
+  try {
+    await db('sponsor_requests', { method: 'POST', body: { name: String(fd.get('name')).trim(), contact: String(fd.get('contact')).trim(), message: String(fd.get('message') || '').trim() } });
+    f.reset();
+    notify('Merci ! Votre demande est envoyée, on vous recontacte.');
+  } catch (err) { notify(err.message); }
+}
+
 async function reportItem(id) {
   if (!requireAuth(() => reportItem(id), 'signaler une annonce')) return;
   const reason = prompt('Motif du signalement (arnaque, contrefaçon, contenu inapproprié...) :');
@@ -2155,14 +2184,15 @@ async function openAdmin() {
       ok = await db('rpc/admin_access', { method: 'POST', body: { p_code: code.trim() } });
     }
     if (!ok) { adminState = null; notify("Code incorrect. Accès réservé à l'administrateur."); return; }
-    const [members, allOffers, payments, reports] = await Promise.all([
+    const [members, allOffers, payments, reports, sponsors] = await Promise.all([
       db('rpc/admin_members', { method: 'POST', body: {} }),
       db('offers?select=*&order=created_at.desc'),
       db('payments?select=*&order=created_at.desc'),
-      db('reports?select=*&order=created_at.desc')
+      db('reports?select=*&order=created_at.desc'),
+      db('sponsor_requests?select=*&order=created_at.desc')
     ]);
     await loadData();
-    adminState = { members, offers: allOffers.map(mapOffer), payments, reports };
+    adminState = { members, offers: allOffers.map(mapOffer), payments, reports, sponsors };
     showView('admin');
   } catch (err) {
     notify(err.message);
@@ -2239,7 +2269,7 @@ function renderAdmin() {
   a.payments.forEach(p => { payTypes[p.type] = (payTypes[p.type] || 0) + Number(p.amount); });
 
   $('adminBody').innerHTML = `
-    <p class="demo-note" style="margin:0 0 16px;">Données en direct de la base en ligne. Les paiements sont marqués « Simulé » tant que le paiement en ligne n'est pas branché.</p>
+    <p class="demo-note" style="margin:0 0 16px;">Données en direct de la base en ligne. Les paiements marqués « Simulé » ou « À encaisser » n'ont pas encore été prélevés : le paiement en ligne n'est pas branché.</p>
     <div class="adm-card">
       <div class="adm-head"><h3>Répartition des annonces</h3></div>
       ${adminTable(['Espace', 'Annonces', 'Valeur'], byMode)}
@@ -2259,7 +2289,11 @@ function renderAdmin() {
     ${adminSection('Signalements', 'signalements', i => `<button class="btn btn-outline btn-sm" onclick="adminDismissReport('${esc(a.reports[i].id)}')">Classer</button>`)}
     <div class="adm-card">
       <div class="adm-head"><h3>Tarifs en vigueur</h3></div>
-      ${adminTable(['Option', 'Prix'], [['Photos (jusqu\'à ' + FREE_PHOTOS + ')', 'Gratuit']].concat(PHOTO_PACKS.map(p => [p.label, fmtEuro(p.price)]), [['Boost 48 h', fmtEuro(BOOST_PRICE)]]))}
+      ${adminTable(['Option', 'Prix'], [['Photos (jusqu\'à ' + FREE_PHOTOS + ')', 'Gratuit']].concat(PHOTO_PACKS.map(p => [p.label, fmtEuro(p.price)]), [['Boost 48 h', fmtEuro(BOOST_PRICE)], ['Boost 7 jours', fmtEuro(BOOST_WEEK_PRICE)], ['Frais de validation d\'un échange (gratuit pour les 100 fondateurs)', fmtEuro(TROC_FEE)]]))}
+    </div>
+    <div class="adm-card">
+      <div class="adm-head"><h3>Demandes de sponsors (${(a.sponsors || []).length})</h3></div>
+      ${adminTable(['Date', 'Nom', 'Contact', 'Message'], (a.sponsors || []).map(x => [dateFR(x.created_at), esc(x.name), esc(x.contact), esc(x.message)]))}
     </div>
     <div class="adm-card">
       <div class="adm-head"><h3>Changer le code administrateur</h3></div>
