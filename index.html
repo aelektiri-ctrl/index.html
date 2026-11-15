@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>À Vos Trocs — Échange 100 % troc, vente & soulte</title>
+<meta name="description" content="Échangez vos objets 100 % troc à valeur équitable, ou vendez et complétez avec une soulte. La seconde main entre membres inscrits.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="À Vos Trocs">
+<meta property="og:title" content="À Vos Trocs — Échange 100 % troc, vente & soulte">
+<meta property="og:description" content="Échangez vos objets 100 % troc à valeur équitable, ou vendez et complétez avec une soulte. La seconde main entre membres inscrits.">
+<meta property="og:image" content="og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2064%2064%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20aria-hidden%3D%22true%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22lg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23f7d47c%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff9a4d%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2216%22%20fill%3D%22url%28%23lg%29%22/%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2315120a%22%20stroke-width%3D%225.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M17%2023h28M37%2015l8%208-8%208%22/%3E%3Cpath%20d%3D%22M47%2041H19M27%2033l-8%208%208%208%22/%3E%3C/g%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0a0e0d">
+<style>
+:root {
+  color-scheme: dark;
+  --green: #d9b872;        /* accent champagne */
+  --green-dark: #c4a05a;
+  --lime: rgba(217, 184, 114, 0.14);
+  --lime-hover: rgba(217, 184, 114, 0.26);
+  --bg: #0a0e0d;
+  --surface: #121816;
+  --surface-2: #1a2220;
+  --ink: #f1efe8;
+  --muted: #97a39e;
+  --border: #27322e;
+  --on-accent: #15120a;
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 14px 34px rgba(0, 0, 0, 0.5);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+.topbar {
+  max-width: 1280px;
+  margin: auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.brand {
+  font-size: 24px;
+  font-weight: 850;
+  color: var(--green);
+  letter-spacing: -0.8px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.brand span { color: #7fa043; }
+
+.nav-tabs {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  overflow-x: auto;
+  padding: 2px 0;
+}
+.nav-tab {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.nav-tab:hover { color: var(--green); background: var(--surface-2); }
+.nav-tab.active { background: var(--green); color: #ffffff; }
+
+.spacer { flex: 1; }
+
+.btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 650;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-primary { background: var(--green); color: #ffffff; }
+.btn-primary:hover { background: var(--green-dark); }
+.btn-lime { background: var(--lime); color: var(--green); }
+.btn-lime:hover { background: var(--lime-hover); }
+.btn-outline { background: var(--surface); border: 1px solid var(--border); color: var(--ink); }
+.btn-outline:hover { border-color: var(--green); color: var(--green); background: var(--surface-2); }
+
+main { max-width: 1280px; margin: auto; padding: 24px; }
+.view { display: none; }
+.view.active { display: block; }
+
+.hero-banner {
+  background: linear-gradient(95deg, rgba(23, 78, 64, 0.96) 0%, rgba(23, 78, 64, 0.85) 55%, rgba(23, 78, 64, 0.45) 100%),
+              url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+  border-radius: 20px;
+  padding: 48px;
+  color: #ffffff;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 290px;
+}
+.hero-tag {
+  display: inline-block;
+  background: rgba(219, 242, 155, 0.18);
+  color: var(--lime);
+  border: 1px solid rgba(219, 242, 155, 0.35);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  width: fit-content;
+  margin-bottom: 14px;
+}
+.hero-banner h1 {
+  font-size: clamp(26px, 3.5vw, 42px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  max-width: 650px;
+  margin-bottom: 14px;
+}
+.hero-banner h1 em { font-style: normal; color: var(--lime); }
+.hero-banner p {
+  font-size: 15px;
+  color: #e2ebe7;
+  max-width: 560px;
+  margin-bottom: 24px;
+}
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.search-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+}
+.search-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1fr 1fr auto;
+  gap: 10px;
+}
+.search-input, .search-select {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 14px;
+  outline: none;
+}
+.search-input:focus, .search-select:focus {
+  border-color: var(--green);
+  background: #ffffff;
+}
+
+.chips-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 0 4px;
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.chip {
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.chip:hover { color: var(--green); background: var(--surface-2); }
+.chip.active { background: var(--green); color: #ffffff; }
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.tool-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+.tool-box h4 { font-size: 14px; color: var(--green); margin-bottom: 4px; font-weight: 700; }
+.tool-box p { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.4; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.section-header h2 { font-size: 20px; font-weight: 750; color: var(--ink); }
+.results-meta { font-size: 13px; color: var(--muted); font-weight: 500; }
+
+.listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+  gap: 20px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.card-media {
+  height: 195px;
+  position: relative;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.badge-stack {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tag-pill {
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  backdrop-filter: blur(6px);
+}
+.tag-troc { background: rgba(23, 78, 64, 0.92); color: #ffffff; }
+.tag-hybride { background: rgba(219, 242, 155, 0.95); color: var(--green); }
+.tag-vente { background: rgba(29, 78, 216, 0.92); color: #ffffff; }
+.tag-boost { background: #f59e0b; color: #ffffff; }
+
+.fav-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--green);
+  font-size: 17px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.fav-btn.active { color: #dc2626; }
+
+.card-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.card-meta-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.verified-dot { color: var(--green); font-weight: 700; }
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.card-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.est-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--green);
+}
+.est-label { font-size: 11px; color: var(--muted); }
+
+.card-exchange-box {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+}
+.card-exchange-box strong {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.vote-strip {
+  background: var(--surface-2);
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+}
+.vote-actions { display: flex; gap: 6px; }
+.vote-mini-btn {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.vote-mini-btn:hover { border-color: var(--green); color: var(--green); }
+
+dialog {
+  border: 0;
+  border-radius: 18px;
+  padding: 24px;
+  width: 600px;
+  max-width: calc(100% - 24px);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+dialog::backdrop { background: rgba(15, 35, 29, 0.65); backdrop-filter: blur(4px); }
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.modal-header h3 { font-size: 18px; font-weight: 750; color: var(--green); }
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--surface-2);
+  font-size: 18px;
+  color: var(--ink);
+}
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 13px; font-weight: 650; margin-bottom: 5px; color: var(--ink); }
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  background: #ffffff;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.deal-builder {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.deal-builder h4 { font-size: 13px; color: var(--green); margin-bottom: 8px; }
+
+.vote-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 20px;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+.vote-item {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.vote-item img {
+  width: 84px;
+  height: 84px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.vote-vs {
+  text-align: center;
+  background: var(--surface-2);
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.kpi-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+.kpi-box span { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+.kpi-box strong { display: block; font-size: 24px; color: var(--green); margin-top: 4px; }
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--green);
+  color: #ffffff;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  z-index: 2000;
+}
+
+@media (max-width: 960px) {
+  .search-row { grid-template-columns: 1fr; }
+  .tools-grid { grid-template-columns: 1fr 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .vote-card { grid-template-columns: 1fr; text-align: center; }
+  .vote-item { flex-direction: column; }
+}
+
+/* ===== Thème sombre premium ===== */
+body {
+  background:
+    radial-gradient(1100px 520px at 85% -8%, rgba(217, 184, 114, 0.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, rgba(31, 107, 87, 0.12), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+header { background: rgba(10, 14, 13, 0.86); backdrop-filter: blur(14px); }
+.brand { font-family: Georgia, "Times New Roman", serif; color: var(--ink); font-weight: 700; letter-spacing: -0.4px; }
+.brand span { color: var(--green); }
+.hero-banner h1, .section-header h2, .modal-header h3 { font-family: Georgia, "Times New Roman", serif; font-weight: 600; letter-spacing: -0.3px; }
+.nav-tab:hover { color: var(--ink); }
+.nav-tab.active, .chip.active, .toast, .auth-tab.active { color: var(--on-accent); }
+.btn-primary { color: var(--on-accent); }
+.btn-lime { border: 1px solid rgba(217, 184, 114, 0.4); }
+.btn-outline { background: transparent; }
+.hero-banner {
+  background: linear-gradient(95deg, rgba(8, 12, 11, 0.97) 0%, rgba(8, 12, 11, 0.86) 55%, rgba(8, 12, 11, 0.5) 100%),
+              url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+  border: 1px solid var(--border);
+}
+.hero-tag { background: rgba(217, 184, 114, 0.12); color: var(--green); border-color: rgba(217, 184, 114, 0.35); }
+.hero-banner h1 em { color: var(--green); }
+.hero-banner p { color: #c9d1cd; }
+.tag-troc { background: rgba(10, 14, 13, 0.85); color: var(--green); }
+.tag-hybride { background: rgba(217, 184, 114, 0.96); color: var(--on-accent); }
+.fav-btn { background: rgba(10, 14, 13, 0.72); color: #ffffff; }
+.search-input, .search-select, .form-control { background: var(--surface-2); color: var(--ink); }
+.search-input:focus, .search-select:focus, .form-control:focus { background: var(--surface-2); border-color: var(--green); outline: none; }
+.form-control[readonly] { color: var(--muted); }
+::placeholder { color: #6f7b76; }
+.vote-mini-btn { background: transparent; }
+dialog { border: 1px solid var(--border); }
+input[type="checkbox"] { accent-color: var(--green); }
+.kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+
+.auth-tabs { display: flex; gap: 6px; background: var(--surface-2); padding: 4px; border-radius: 12px; margin-bottom: 12px; }
+.auth-tab { flex: 1; border: 0; background: transparent; color: var(--muted); padding: 9px; border-radius: 9px; font-weight: 650; font-size: 14px; }
+.auth-tab.active { background: var(--green); }
+.auth-error { color: #ff9a8b; font-size: 13px; min-height: 18px; margin-bottom: 8px; }
+.hint { font-size: 12px; color: var(--green); margin-bottom: 10px; line-height: 1.4; }
+.demo-note { font-size: 11px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+.avatar { width: 54px; height: 54px; border-radius: 50%; background: var(--green); color: var(--on-accent); display: grid; place-items: center; font-size: 22px; font-weight: 800; flex-shrink: 0; }
+.trust-bar { height: 8px; border-radius: 6px; background: var(--surface-2); overflow: hidden; margin: 8px 0; }
+.trust-bar span { display: block; height: 100%; background: var(--green); }
+.match-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+.match-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.status-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); color: var(--muted); }
+.status-ok { color: #8fdcb0; border-color: rgba(143, 220, 176, 0.4); }
+.status-no { color: #ff9a8b; border-color: rgba(255, 154, 139, 0.4); }
+
+@media (max-width: 600px) {
+  .topbar { padding: 10px 14px; gap: 10px; }
+  main { padding: 14px; }
+  .hero-banner { padding: 26px 20px; min-height: 0; }
+  .tools-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  dialog { padding: 18px; }
+}
+
+/* ===== Marque, tableaux d'administration, galerie ===== */
+.brand { font-family: 'Fraunces', Georgia, serif; font-weight: 800; font-size: 23px; gap: 8px; letter-spacing: -0.5px; color: var(--ink); white-space: nowrap; }
+.brand svg { width: 34px; height: 34px; flex-shrink: 0; }
+.brand span { background: linear-gradient(90deg, #f7d47c, #ff9a4d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero-banner h1, .section-header h2, .modal-header h3 { font-family: 'Fraunces', Georgia, serif; }
+.space-note { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+.space-note strong { color: var(--ink); }
+.sub-title { font-size: 15px; font-weight: 700; color: var(--green); margin: 22px 0 12px; }
+.thumbs { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px; }
+.thumbs img { width: 62px; height: 62px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid var(--border); flex-shrink: 0; }
+.adm-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+.adm-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.adm-head h3 { font-size: 16px; color: var(--green); }
+.table-wrap { overflow-x: auto; }
+table.adm { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.adm th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+table.adm td { padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+table.adm tr:last-child td { border-bottom: 0; }
+.adm-empty { font-size: 13px; color: var(--muted); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.install-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border: 1px solid rgba(217, 184, 114, 0.45); border-radius: 14px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px; font-weight: 600; line-height: 1.4; }
+.install-bar[hidden] { display: none; }
+.install-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+button:disabled { opacity: 0.6; cursor: wait; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topbar">
+    <a href="#" class="brand" onclick="switchView('market'); return false;"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7d47c"/><stop offset="1" stop-color="#ff9a4d"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#lg)"/><g fill="none" stroke="#15120a" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 23h28M37 15l8 8-8 8"/><path d="M47 41H19M27 33l-8 8 8 8"/></g></svg>À Vos <span>Trocs</span></a>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" id="tab-market" onclick="switchView('market')">Accueil</button>
+      <button class="nav-tab" id="tab-troc" onclick="switchView('troc')">Échange 100 % troc</button>
+      <button class="nav-tab" id="tab-argent" onclick="switchView('argent')">Vente & soulte (€)</button>
+      <button class="nav-tab" id="tab-votes" onclick="switchView('votes')">Votes & Estimation</button>
+      <button class="nav-tab" id="tab-panier" onclick="switchView('panier')">Mon Inventaire (<span id="myCount">0</span>)</button>
+      <button class="nav-tab" id="tab-admin" onclick="switchView('admin')">Administration</button>
+    </nav>
+    <div class="spacer"></div>
+    <button class="btn btn-outline" onclick="openInbox()">Messagerie (<span id="msgCount">0</span>)</button>
+    <button class="btn btn-outline" id="accountBtn" onclick="openAccount()">Se connecter</button>
+    <button class="btn btn-primary" onclick="openPostModal()">+ Déposer une annonce</button>
+  </div>
+</header>
+
+<main>
+  <div id="installBar" class="install-bar" hidden></div>
+  <div id="view-market" class="view active">
+    <section class="hero-banner">
+      <span class="hero-tag">Économie Circulaire • Troc Direct • Achat Sécurisé</span>
+      <h1>Échangez sans argent, ou <em>vendez et complétez en euros.</em></h1>
+      <p>Deux espaces bien séparés : l'échange 100 % troc, à valeur équitable et sans un centime, et l'espace vente & soulte pour tout ce qui implique de l'argent.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="switchView('troc')">Espace 100 % troc</button>
+        <button class="btn btn-outline" style="background:rgba(255,255,255,0.12); color:#fff; border-color:rgba(255,255,255,0.3);" onclick="switchView('argent')">Espace vente & soulte</button>
+      </div>
+    </section>
+
+    <div class="tools-grid">
+      <div class="tool-box">
+        <div>
+          <h4>Déclic de Correspondance</h4>
+          <p>Saisissez l'objet que vous possédez pour trouver les membres qui le recherchent.</p>
+        </div>
+        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="openDeclic()">Trouver un match</button>
+      </div>
+      <div class="tool-box">
+        <div>
+          <h4>Offre Multi-Lots</h4>
+          <p>Assemblez plusieurs articles de votre inventaire pour obtenir un bien de plus haute valeur.</p>
+        </div>
+        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="switchView('panier')">Gérer mon inventaire</button>
+      </div>
+      <div class="tool-box">
+        <div>
+          <h4>Radar d'Alertes</h4>
+          <p>Créez une veille automatique sur un modèle précis ou une catégorie.</p>
+        </div>
+        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="openRadar()">Configurer une alerte (<span id="radarBadge">0</span>)</button>
+      </div>
+      <div class="tool-box">
+        <div>
+          <h4>TrocPass Sécurisé</h4>
+          <p>Contrat d'échange numérique, vérification d'identité et remise en main propre.</p>
+        </div>
+        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="$('safetyModal').showModal()">Garanties & Sécurité</button>
+      </div>
+    </div>
+
+    <div class="search-panel">
+      <div class="search-row">
+        <input class="search-input" id="searchQuery" placeholder="Rechercher un article, une marque, un modèle..." oninput="renderListings()">
+        <input class="search-input" id="searchCity" placeholder="Ville ou code postal (ex: Le Havre, Rouen...)" oninput="renderListings()">
+        <select class="search-select" id="filterMode" onchange="renderListings()">
+          <option value="ALL">Tous les modes</option>
+          <option value="TROC">Échange 100 % troc</option>
+          <option value="HYBRIDE">Échange + Soulte (€)</option>
+          <option value="VENTE">Vente d'occasion</option>
+        </select>
+        <select class="search-select" id="sortOrder" onchange="renderListings()">
+          <option value="recent">Plus récentes</option>
+          <option value="price_asc">Valeur croissante</option>
+          <option value="price_desc">Valeur décroissante</option>
+        </select>
+        <button class="btn btn-primary" onclick="renderListings()">Filtrer</button>
+      </div>
+      <div class="chips-bar" id="categoryChips"></div>
+    </div>
+
+    <div class="section-header">
+      <h2 id="feedTitle">Annonces disponibles</h2>
+      <span class="results-meta" id="resultsCount">0 annonce</span>
+    </div>
+
+    <div class="listings-grid" id="listingsGrid"></div>
+  </div>
+
+  <div id="view-troc" class="view">
+    <div class="section-header">
+      <div>
+        <h2>Échange 100 % troc</h2>
+        <p style="font-size:13px; color:var(--muted);">Objet contre objet, sans aucun argent.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openPostModal('TROC')">+ Proposer un troc</button>
+    </div>
+    <div class="space-note"><strong>La règle de cet espace :</strong> l'échange se fait à valeur équitable. Si votre objet vaut moins que celui demandé, vous ajoutez un autre objet pour équilibrer, jamais d'argent. Pour vendre ou compléter en euros, rendez-vous dans l'espace « Vente & soulte ».</div>
+    <div class="listings-grid" id="trocGrid"></div>
+  </div>
+
+  <div id="view-argent" class="view">
+    <div class="section-header">
+      <div>
+        <h2>Vente & soulte (€)</h2>
+        <p style="font-size:13px; color:var(--muted);">Tout ce qui implique de l'argent : vente directe et échange complété en euros.</p>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="openPostModal('VENTE')">+ Vendre un article</button>
+        <button class="btn btn-lime" onclick="openPostModal('HYBRIDE')">+ Échange avec soulte</button>
+      </div>
+    </div>
+    <div class="sub-title" style="margin-top:0;">Échange + soulte en euros</div>
+    <div class="listings-grid" id="hybrideGrid"></div>
+    <div class="sub-title">Vente directe</div>
+    <div class="listings-grid" id="occasionGrid"></div>
+  </div>
+
+  <div id="view-votes" class="view">
+    <div class="section-header">
+      <div>
+        <h2>Arbitrage & Votes de la Communauté</h2>
+        <p style="font-size:13px; color:var(--muted);">Votez sur l'équité des propositions d'échange + compensation financière en cours.</p>
+      </div>
+      <button class="btn btn-lime" onclick="openNewVoteModal()">+ Soumettre un échange au vote</button>
+    </div>
+    <div id="votesContainer"></div>
+  </div>
+
+  <div id="view-panier" class="view">
+    <div class="section-header">
+      <div>
+        <h2>Mon Inventaire & Lots de Troc</h2>
+        <p style="font-size:13px; color:var(--muted);">Vos articles publiés disponibles pour des échanges simples ou groupés.</p>
+      </div>
+      <button class="btn btn-lime" onclick="openPostModal()">+ Ajouter un bien à mon inventaire</button>
+    </div>
+    <div id="matchPanel"></div>
+    <div class="listings-grid" id="myInventoryGrid"></div>
+  </div>
+
+  <div id="view-admin" class="view">
+    <div class="section-header">
+      <div>
+        <h2>Administration</h2>
+        <p style="font-size:13px; color:var(--muted);">Suivi détaillé : membres, annonces, propositions, paiements et signalements.</p>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-outline" onclick="openAdmin()">Actualiser</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-box"><span>Membres inscrits</span><strong id="kpiUsers">0</strong></div>
+      <div class="kpi-box"><span>Annonces en ligne</span><strong id="kpiListings">0</strong></div>
+      <div class="kpi-box"><span>Valeur des annonces</span><strong id="kpiVolume">0 €</strong></div>
+      <div class="kpi-box"><span>Propositions</span><strong id="kpiOffers">0</strong></div>
+      <div class="kpi-box"><span>Votes enregistrés</span><strong id="kpiVotes">0</strong></div>
+      <div class="kpi-box"><span>Recettes options</span><strong id="kpiRevenue">0 €</strong></div>
+      <div class="kpi-box"><span>Signalements</span><strong id="kpiReports">0</strong></div>
+    </div>
+    <div id="adminBody"></div>
+  </div>
+</main>
+
+<dialog id="postModal">
+  <div class="modal-header">
+    <h3>Publier une nouvelle annonce</h3>
+    <button class="close-btn" onclick="$('postModal').close()">×</button>
+  </div>
+  <form id="postForm" onsubmit="submitListing(event)">
+    <div class="form-group">
+      <label>Mode de transaction souhaité</label>
+      <select class="form-control" name="mode" id="postMode" onchange="togglePostFields()">
+        <option value="TROC">Échange 100 % troc (sans argent)</option>
+        <option value="HYBRIDE">Échange + soulte en euros</option>
+        <option value="VENTE">Vente directe (€)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Titre de l'annonce</label>
+      <input class="form-control" name="title" required placeholder="Ex: VTT Rockrider ST 540, iPhone 14 Pro, Canapé 3 places...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Catégorie</label>
+        <select class="form-control" name="category">
+          <option>High-Tech & Téléphonie</option>
+          <option>Mobilité & Vélos</option>
+          <option>Maison & Ameublement</option>
+          <option>Outillage & Bricolage</option>
+          <option>Photo, Audio & Gaming</option>
+          <option>Mode & Horlogerie</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>État général</label>
+        <select class="form-control" name="condition">
+          <option>État neuf</option>
+          <option>Très bon état</option>
+          <option>Bon état</option>
+          <option>Satisfaisant</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Valeur estimée ou Prix de vente (€)</label>
+        <input class="form-control" type="number" name="price" required min="1" placeholder="Ex: 350">
+      </div>
+      <div class="form-group">
+        <label>Ville</label>
+        <input class="form-control" name="city" required placeholder="Ex: Le Havre">
+      </div>
+    </div>
+    <div class="form-group" id="wantFieldGroup">
+      <label id="wantLabel">Ce que vous recherchez en échange</label>
+      <input class="form-control" name="want" id="postWantInput" placeholder="Ex: MacBook Air ou Console PS5 + rajout de ma part">
+    </div>
+    <div class="form-group">
+      <label>Description détaillée</label>
+      <textarea class="form-control" name="description" rows="3" required placeholder="Précisez la marque, le modèle, l'année d'achat, la présence de facture ou accessoires..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Photos de l'article (3 gratuites, 10 maximum)</label>
+      <input class="form-control" type="file" id="postPhotoFile" accept="image/*" multiple onchange="updatePhotoPack()">
+      <div class="hint" id="photoInfo" style="margin:8px 0 0;"></div>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface-2); padding:12px; border-radius:10px; margin-bottom:16px;">
+      <div>
+        <strong style="font-size:13px; color:var(--green);">Booster la visibilité en tête de liste</strong>
+        <div style="font-size:12px; color:var(--muted);">Badge prioritaire pendant 48 heures</div>
+      </div>
+      <input type="checkbox" name="boost" style="width:18px; height:18px;">
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Publier l'annonce</button>
+  </form>
+</dialog>
+
+<dialog id="detailModal">
+  <div class="modal-header">
+    <h3 id="detailTitle">Détail de l'article</h3>
+    <button class="close-btn" onclick="$('detailModal').close()">×</button>
+  </div>
+  <div id="detailBody"></div>
+</dialog>
+
+<dialog id="offerModal">
+  <div class="modal-header">
+    <h3>Formuler une proposition</h3>
+    <button class="close-btn" onclick="$('offerModal').close()">×</button>
+  </div>
+  <form id="offerForm" onsubmit="submitOffer(event)">
+    <div class="form-group">
+      <label>Type de proposition</label>
+      <select class="form-control" name="offerType" id="offerTypeSelect" onchange="updateOfferBuilder()">
+        <option value="HYBRIDE">Échange d'objet(s) + Compensation financière (€)</option>
+        <option value="TROC">Échange pur (Objet contre Objet uniquement)</option>
+        <option value="ACHAT">Achat direct au prix demandé (€)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Votre nom ou pseudonyme</label>
+      <input class="form-control" name="sender" id="offerSender" required readonly>
+    </div>
+    <div id="offerObjectGroup" class="form-group">
+      <label>Article(s) que vous proposez en échange</label>
+      <input class="form-control" name="offeredItem" id="offeredItemInput" placeholder="Ex: Mon iPad Air 5" oninput="onOfferValues()">
+      <label style="margin-top:10px;">Valeur estimée de votre objet (€)</label>
+      <input class="form-control" type="number" name="offeredValue" id="offeredValueInput" min="0" placeholder="Ex: 300" oninput="onOfferValues()">
+      <div id="extraItems"></div>
+      <button type="button" class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="addOfferItem()">+ Ajouter un autre objet</button>
+      <div class="hint" id="equityHint" style="margin:12px 0 0;"></div>
+    </div>
+    <div id="offerCashGroup" class="deal-builder">
+      <h4>Ajustement financier (Soulte)</h4>
+      <div class="hint" id="soulteHint"></div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Sens de la compensation</label>
+          <select class="form-control" name="cashDirection" id="cashDirSelect">
+            <option value="ADD">Je rajoute en plus de mon objet</option>
+            <option value="ASK">Je demande un rajout en plus de son objet</option>
+            <option value="BUY">Paiement intégral (Achat direct)</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Montant (€)</label>
+          <input class="form-control" type="number" name="cashAmount" id="cashAmountInput" min="0" value="50">
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Message au propriétaire</label>
+      <textarea class="form-control" name="message" rows="3" required placeholder="Bonjour, je suis intéressé par votre article. Voici ma proposition..."></textarea>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+      <input type="checkbox" id="submitToPublicVote" checked>
+      <label for="submitToPublicVote" style="font-size:12px; color:var(--muted);">Soumettre aussi cette proposition aux votes d'équité de la communauté</label>
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Envoyer la proposition</button>
+  </form>
+</dialog>
+
+<dialog id="inboxModal">
+  <div class="modal-header">
+    <h3>Propositions & Messages</h3>
+    <button class="close-btn" onclick="$('inboxModal').close()">×</button>
+  </div>
+  <div id="inboxList"></div>
+</dialog>
+
+<dialog id="declicModal">
+  <div class="modal-header">
+    <h3>Déclic de Correspondance</h3>
+    <button class="close-btn" onclick="$('declicModal').close()">×</button>
+  </div>
+  <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Indiquez un objet en votre possession pour voir immédiatement qui le recherche :</p>
+  <input class="form-control" id="declicQuery" placeholder="Ex: Vélo, Console, Appareil photo, Montre..." oninput="runDeclic()">
+  <div id="declicResults" style="margin-top:14px;"></div>
+</dialog>
+
+<dialog id="radarModal">
+  <div class="modal-header">
+    <h3>Créer une Alerte Radar</h3>
+    <button class="close-btn" onclick="$('radarModal').close()">×</button>
+  </div>
+  <form onsubmit="saveRadar(event)">
+    <div class="form-group">
+      <label>Mot-clé ou modèle recherché</label>
+      <input class="form-control" id="radarKey" required placeholder="Ex: Gravel, Canon EOS, MacBook...">
+    </div>
+    <div class="form-group">
+      <label>Budget / Valeur max (€)</label>
+      <input class="form-control" type="number" id="radarMax" placeholder="Ex: 500">
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Activer l'alerte</button>
+  </form>
+  <div id="radarSavedList" style="margin-top:16px;"></div>
+</dialog>
+
+<dialog id="voteModal">
+  <div class="modal-header">
+    <h3>Soumettre un échange au vote</h3>
+    <button class="close-btn" onclick="$('voteModal').close()">×</button>
+  </div>
+  <form onsubmit="createVotePoll(event)">
+    <div class="form-group">
+      <label>Article A (Proposé)</label>
+      <input class="form-control" id="voteItemA" required placeholder="Ex: iPhone 13 Pro 256Go">
+    </div>
+    <div class="form-group">
+      <label>Article B (Demandé)</label>
+      <input class="form-control" id="voteItemB" required placeholder="Ex: MacBook Air M1">
+    </div>
+    <div class="form-group">
+      <label>Compensation financière proposée (€)</label>
+      <input class="form-control" type="number" id="voteCash" value="120">
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Publier au vote communautaire</button>
+  </form>
+</dialog>
+
+<dialog id="authModal">
+  <div class="modal-header">
+    <h3>Espace membre</h3>
+    <button class="close-btn" onclick="$('authModal').close()">×</button>
+  </div>
+  <p id="authReason" style="font-size:13px; color:var(--muted); margin-bottom:14px;"></p>
+  <div class="auth-tabs" id="authTabs">
+    <button type="button" class="auth-tab" id="authTabLogin" onclick="setAuthTab('login')">Connexion</button>
+    <button type="button" class="auth-tab" id="authTabSignup" onclick="setAuthTab('signup')">Créer un compte</button>
+  </div>
+  <div class="auth-error" id="authError"></div>
+  <form id="loginForm" onsubmit="submitLogin(event)">
+    <div class="form-group">
+      <label>Adresse e-mail</label>
+      <input class="form-control" type="email" name="email" required autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input class="form-control" type="password" name="password" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Se connecter</button>
+  </form>
+  <form id="signupForm" onsubmit="submitSignup(event)">
+    <div class="form-group">
+      <label>Prénom et nom (ou pseudonyme)</label>
+      <input class="form-control" name="name" required minlength="2" autocomplete="name" placeholder="Ex: Marc D.">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Adresse e-mail</label>
+        <input class="form-control" type="email" name="email" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Ville</label>
+        <input class="form-control" name="city" required placeholder="Ex: Le Havre">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Mot de passe (8 caractères min.)</label>
+        <input class="form-control" type="password" name="password" required minlength="8" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Confirmer le mot de passe</label>
+        <input class="form-control" type="password" name="password2" required autocomplete="new-password">
+      </div>
+    </div>
+    <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:14px;">
+      <input type="checkbox" id="acceptCharte" required style="margin-top:3px;">
+      <label for="acceptCharte" style="font-size:12px; color:var(--muted);">J'accepte la charte de la communauté : annonces sincères, échanges équitables et remise en lieu public.</label>
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Créer mon compte</button>
+  </form>
+</dialog>
+
+<dialog id="accountModal">
+  <div class="modal-header">
+    <h3>Mon compte</h3>
+    <button class="close-btn" onclick="$('accountModal').close()">×</button>
+  </div>
+  <div id="accountBody"></div>
+</dialog>
+
+<dialog id="iosModal">
+  <div class="modal-header">
+    <h3>Installer sur iPhone</h3>
+    <button class="close-btn" onclick="$('iosModal').close()">×</button>
+  </div>
+  <ol style="font-size:14px; line-height:1.9; padding-left:20px; color:var(--ink);">
+    <li>Ouvrez cette page dans <strong>Safari</strong>.</li>
+    <li>Appuyez sur le bouton <strong>Partager</strong> (le carré avec une flèche vers le haut).</li>
+    <li>Choisissez <strong>« Sur l'écran d'accueil »</strong>, puis <strong>Ajouter</strong>.</li>
+  </ol>
+  <p class="demo-note">L'icône À Vos Trocs apparaît ensuite sur votre écran d'accueil, comme une application.</p>
+</dialog>
+
+<dialog id="safetyModal">
+  <div class="modal-header">
+    <h3>Garanties & Protocole TrocPass</h3>
+    <button class="close-btn" onclick="$('safetyModal').close()">×</button>
+  </div>
+  <p style="font-size:14px; color:var(--muted); line-height:1.7;">
+    Chaque échange ou transaction hybride sur <strong>À Vos Trocs</strong> s'appuie sur trois niveaux de sécurité :<br><br>
+    1. <strong>Estimation collaborative</strong> : La communauté évalue l'équité des échanges avec soulte avant validation.<br>
+    2. <strong>Profils vérifiés</strong> : Historique des échanges réussis et note moyenne affichée sur chaque fiche.<br>
+    3. <strong>Remise sécurisée</strong> : Privilégiez les lieux publics fréquentés et contrôlez le numéro de série et l'état de fonctionnement avant de finaliser.
+  </p>
+</dialog>
+
+<script>
+/* ===== Connexion à la base de données (Supabase) ===== */
+const SUPABASE_URL = 'https://pjakthocdynnypyzhkpp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ZF8701uwEeYhKoqXzMQ56A_JwgrG4WD';
+
+const CATEGORIES = [
+  'Toutes',
+  'High-Tech & Téléphonie',
+  'Mobilité & Vélos',
+  'Maison & Ameublement',
+  'Photo, Audio & Gaming',
+  'Outillage & Bricolage',
+  'Mode & Horlogerie',
+  'Favoris'
+];
+
+const FALLBACK_PHOTOS = {
+  'High-Tech & Téléphonie': 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80',
+  'Mobilité & Vélos': 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=800&q=80',
+  'Maison & Ameublement': 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80',
+  'Outillage & Bricolage': 'https://images.unsplash.com/photo-1581147036324-c17ac41dfa6c?auto=format&fit=crop&w=800&q=80',
+  'Photo, Audio & Gaming': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+  'Mode & Horlogerie': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'
+};
+const DEFAULT_PHOTO = FALLBACK_PHOTOS['High-Tech & Téléphonie'];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtEuro = n => Number(n).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+const dateFR = d => d ? new Date(d).toLocaleDateString('fr-FR') : '';
+
+function loadLocal(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; }
+}
+function saveLocal(key, value) {
+  try { value === null ? localStorage.removeItem(key) : localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+/* Données partagées (base en ligne) */
+let listings = [];
+let profiles = {};
+let voteRows = [];
+let votes = [];
+let offers = [];
+let dataLoaded = false;
+let loadError = false;
+let lastLoad = 0;
+
+/* Données propres à l'appareil */
+let favs = loadLocal('avt_favs', []);
+let radars = loadLocal('avt_radars', []);
+
+let activeCat = 'Toutes';
+let currentItem = null;
+let pendingAction = null;
+
+function notify(msg) {
+  document.querySelector('.toast')?.remove();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4200);
+}
+
+/* ===== Session et appels à la base ===== */
+let session = loadLocal('avt_session', null);
+let currentUser = session ? session.user : null;
+let refreshing = null;
+
+const AUTH_ERRORS = {
+  invalid_credentials: 'E-mail ou mot de passe incorrect.',
+  user_already_exists: 'Un compte existe déjà avec cet e-mail. Connectez-vous.',
+  email_exists: 'Un compte existe déjà avec cet e-mail. Connectez-vous.',
+  weak_password: 'Mot de passe trop faible : 8 caractères minimum.',
+  email_not_confirmed: "Votre adresse e-mail n'est pas encore confirmée.",
+  email_address_invalid: 'Adresse e-mail invalide.',
+  email_address_not_authorized: "L'envoi d'e-mails n'est pas encore configuré : l'inscription est momentanément indisponible.",
+  over_email_send_rate_limit: "Trop d'inscriptions en peu de temps. Réessayez dans quelques minutes.",
+  over_request_rate_limit: 'Trop de tentatives. Réessayez dans quelques minutes.',
+  signup_disabled: 'Les inscriptions sont fermées pour le moment.'
+};
+
+function setSession(data) {
+  if (!data) {
+    session = null;
+    currentUser = null;
+    saveLocal('avt_session', null);
+    return;
+  }
+  const meta = data.user.user_metadata || {};
+  session = {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    expires_at: data.expires_at || Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
+    user: { id: data.user.id, email: data.user.email, name: meta.name || 'Membre', city: meta.city || '', createdAt: data.user.created_at }
+  };
+  currentUser = session.user;
+  saveLocal('avt_session', session);
+}
+
+async function authCall(path, body, token) {
+  let r;
+  try {
+    r = await fetch(SUPABASE_URL + '/auth/v1/' + path, {
+      method: 'POST',
+      headers: Object.assign({ apikey: SUPABASE_KEY, 'Content-Type': 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
+      body: JSON.stringify(body || {})
+    });
+  } catch {
+    throw new Error('Connexion impossible. Vérifiez votre réseau.');
+  }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const raw = j.msg || j.error_description || j.message || '';
+    const code = j.error_code || (/already registered/i.test(raw) ? 'user_already_exists' : /invalid login/i.test(raw) ? 'invalid_credentials' : '');
+    throw new Error(AUTH_ERRORS[code] || raw || 'Une erreur est survenue. Réessayez.');
+  }
+  return j;
+}
+
+async function getToken() {
+  if (!session) return null;
+  if (session.expires_at - 60 > Date.now() / 1000) return session.access_token;
+  if (!refreshing) {
+    refreshing = authCall('token?grant_type=refresh_token', { refresh_token: session.refresh_token })
+      .then(setSession)
+      .catch(() => { setSession(null); refreshAccountUI(); })
+      .finally(() => { refreshing = null; });
+  }
+  await refreshing;
+  return session ? session.access_token : null;
+}
+
+async function db(path, opts = {}) {
+  const token = await getToken();
+  const headers = { apikey: SUPABASE_KEY };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+  if (opts.prefer) headers.Prefer = opts.prefer;
+  let r;
+  try {
+    r = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+      method: opts.method || 'GET',
+      headers: headers,
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
+    });
+  } catch {
+    throw new Error('Connexion impossible. Vérifiez votre réseau.');
+  }
+  const text = await r.text();
+  const j = text ? JSON.parse(text) : null;
+  if (!r.ok) throw new Error((j && j.message) || "L'opération a échoué. Réessayez.");
+  return j;
+}
+
+async function uploadPhoto(blob, index) {
+  const token = await getToken();
+  const path = `${currentUser.id}/${Date.now()}-${index}.jpg`;
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/photos/${path}`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'image/jpeg' },
+    body: blob
+  });
+  if (!r.ok) throw new Error("L'envoi d'une photo a échoué. Réessayez.");
+  return `${SUPABASE_URL}/storage/v1/object/public/photos/${path}`;
+}
+
+/* ===== Chargement des données ===== */
+function mapListing(row) {
+  const images = Array.isArray(row.images) ? row.images.filter(u => typeof u === 'string') : [];
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    owner: (profiles[row.owner_id] || {}).name || 'Membre',
+    mode: row.mode,
+    title: row.title,
+    category: row.category,
+    condition: row.condition,
+    price: row.price,
+    city: row.city,
+    want: row.want || '',
+    description: row.description || '',
+    images: images,
+    image: images[0] || FALLBACK_PHOTOS[row.category] || DEFAULT_PHOTO,
+    boost: row.boost,
+    photoPack: row.photo_pack,
+    createdAt: row.created_at
+  };
+}
+
+function mapOffer(row) {
+  return {
+    id: row.id,
+    targetId: row.listing_id,
+    targetTitle: row.listing_title,
+    ownerId: row.owner_id,
+    senderId: row.sender_id,
+    sender: (profiles[row.sender_id] || {}).name || 'Membre',
+    summary: row.summary,
+    message: row.message,
+    status: row.status,
+    code: row.code,
+    date: dateFR(row.created_at)
+  };
+}
+
+async function loadData() {
+  try {
+    const [p, l, v, po, o] = await Promise.all([
+      db('profiles?select=id,name,city,created_at'),
+      db('listings?select=*&order=created_at.desc'),
+      db('votes?select=target_id,user_id,fair'),
+      db('polls?select=*&order=created_at.desc'),
+      currentUser ? db('offers?select=*&order=created_at.desc') : Promise.resolve([])
+    ]);
+    profiles = {};
+    p.forEach(x => { profiles[x.id] = x; });
+    listings = l.map(mapListing);
+    voteRows = v;
+    votes = po.map(x => ({
+      id: x.id, itemA: x.item_a, imgA: x.img_a || DEFAULT_PHOTO, itemB: x.item_b, imgB: x.img_b || FALLBACK_PHOTOS['Photo, Audio & Gaming'], cash: x.cash
+    }));
+    offers = o.map(mapOffer);
+    dataLoaded = true;
+    loadError = false;
+    lastLoad = Date.now();
+  } catch {
+    loadError = true;
+  }
+  renderCurrentView();
+}
+
+function voteStats(id) {
+  let fair = 0, unfair = 0;
+  voteRows.forEach(v => { if (v.target_id === id) v.fair ? fair++ : unfair++; });
+  return { fair, unfair, total: fair + unfair };
+}
+
+const isMine = x => Boolean(currentUser && x.ownerId === currentUser.id);
+const myOffers = () => currentUser ? offers.filter(o => o.senderId === currentUser.id || o.ownerId === currentUser.id) : [];
+
+/* ===== Comptes membres ===== */
+function requireAuth(action, label) {
+  if (currentUser) return true;
+  openAuth('signup', label);
+  pendingAction = action;
+  return false;
+}
+
+function openAuth(tab, label) {
+  $('authReason').textContent = label
+    ? `Créez un compte ou connectez-vous pour ${label}.`
+    : 'La consultation des annonces est libre. Un compte est nécessaire pour publier, proposer un échange et voter.';
+  setAuthTab(tab || 'login');
+  if (!$('authModal').open) $('authModal').showModal();
+}
+
+function setAuthTab(tab) {
+  $('authTabLogin').classList.toggle('active', tab === 'login');
+  $('authTabSignup').classList.toggle('active', tab === 'signup');
+  $('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  $('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+  $('authError').textContent = '';
+}
+
+function authFail(msg) { $('authError').textContent = msg; }
+
+async function withBusy(form, label, fn) {
+  const btn = form.querySelector('button[type="submit"]');
+  const old = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = label;
+  try { return await fn(); } finally { btn.disabled = false; btn.textContent = old; }
+}
+
+async function submitSignup(e) {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const pw = String(fd.get('password'));
+  if (pw.length < 8) return authFail('Le mot de passe doit contenir au moins 8 caractères.');
+  if (pw !== String(fd.get('password2'))) return authFail('Les deux mots de passe ne correspondent pas.');
+  authFail('');
+  await withBusy(form, 'Création du compte...', async () => {
+    try {
+      const data = await authCall('signup', {
+        email: String(fd.get('email')).trim().toLowerCase(),
+        password: pw,
+        data: { name: String(fd.get('name')).trim(), city: String(fd.get('city')).trim() }
+      });
+      if (!data.access_token) {
+        return authFail('Compte créé. Confirmez votre adresse via le lien reçu par e-mail, puis connectez-vous.');
+      }
+      form.reset();
+      await finishAuth(data, `Bienvenue ${(data.user.user_metadata || {}).name || ''} ! Votre compte est créé.`);
+    } catch (err) {
+      authFail(err.message);
+    }
+  });
+}
+
+async function submitLogin(e) {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  authFail('');
+  await withBusy(form, 'Connexion...', async () => {
+    try {
+      const data = await authCall('token?grant_type=password', {
+        email: String(fd.get('email')).trim().toLowerCase(),
+        password: String(fd.get('password'))
+      });
+      form.reset();
+      await finishAuth(data, `Bon retour, ${(data.user.user_metadata || {}).name || ''}.`);
+    } catch (err) {
+      authFail(err.message);
+    }
+  });
+}
+
+async function finishAuth(data, msg) {
+  setSession(data);
+  const action = pendingAction;
+  pendingAction = null;
+  $('authModal').close();
+  refreshAccountUI();
+  notify(msg);
+  await loadData();
+  if (action) action();
+}
+
+async function logout() {
+  const token = session && session.access_token;
+  setSession(null);
+  offers = [];
+  adminState = null;
+  $('accountModal').close();
+  refreshAccountUI();
+  switchView('market');
+  notify('Vous êtes déconnecté.');
+  if (token) authCall('logout', {}, token).catch(() => {});
+}
+
+function refreshAccountUI() {
+  $('accountBtn').textContent = currentUser ? currentUser.name.split(' ')[0] + ' · Mon compte' : 'Se connecter';
+  updateKPIs();
+}
+
+function openAccount() {
+  if (!currentUser) return openAuth('login');
+  const u = currentUser;
+  const mine = listings.filter(isMine).length;
+  const sent = offers.filter(o => o.senderId === u.id).length;
+  const done = myOffers().filter(o => o.status === 'Acceptée').length;
+  const score = Math.min(100, 20 + mine * 10 + sent * 5 + done * 20);
+  $('accountBody').innerHTML = `
+    <div style="display:flex; gap:14px; align-items:center; margin-bottom:18px;">
+      <div class="avatar">${esc(u.name.charAt(0).toUpperCase())}</div>
+      <div>
+        <strong style="font-size:17px;">${esc(u.name)}</strong>
+        <div style="font-size:13px; color:var(--muted);">${esc(u.email)} • ${esc(u.city)}</div>
+        <div style="font-size:12px; color:var(--muted);">Membre depuis le ${dateFR(u.createdAt || Date.now())}</div>
+      </div>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:18px;">
+      <div class="kpi-box"><span>Annonces</span><strong>${mine}</strong></div>
+      <div class="kpi-box"><span>Propositions</span><strong>${sent}</strong></div>
+      <div class="kpi-box"><span>Accords</span><strong>${done}</strong></div>
+    </div>
+    <div style="margin-bottom:18px;">
+      <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:650;">
+        <span>Indice de confiance</span><span style="color:var(--green);">${score} / 100</span>
+      </div>
+      <div class="trust-bar"><span style="width:${score}%"></span></div>
+      <div style="font-size:12px; color:var(--muted);">Il progresse avec vos annonces, vos propositions et vos échanges conclus.</div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-outline" style="flex:1;" onclick="$('accountModal').close(); switchView('panier')">Mon inventaire</button>
+      <button class="btn btn-outline" style="flex:1;" onclick="logout()">Se déconnecter</button>
+    </div>
+  `;
+  $('accountModal').showModal();
+}
+
+$('authModal').addEventListener('close', () => { pendingAction = null; });
+
+/* ===== Navigation ===== */
+let currentView = 'market';
+
+function switchView(view) {
+  if (view === 'admin') return openAdmin();
+  if (view === 'panier' && !requireAuth(() => switchView('panier'), 'gérer votre inventaire')) return;
+  showView(view);
+  if (Date.now() - lastLoad > 30000) loadData();
+}
+
+function showView(view) {
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  $('view-' + view).classList.add('active');
+  $('tab-' + view).classList.add('active');
+  renderCurrentView();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderCurrentView() {
+  const view = currentView;
+  if (view === 'market') renderListings();
+  if (view === 'troc') renderFilteredGrid('TROC', 'trocGrid');
+  if (view === 'argent') { renderFilteredGrid('HYBRIDE', 'hybrideGrid'); renderFilteredGrid('VENTE', 'occasionGrid'); }
+  if (view === 'votes') renderVotes();
+  if (view === 'panier') { renderMyInventory(); renderMatches(); }
+  if (view === 'admin') renderAdmin();
+  updateKPIs();
+}
+
+/* ===== Annonces ===== */
+const EMPTY_BOX = 'grid-column:1/-1; background:var(--surface); padding:40px; text-align:center; border-radius:16px; border:1px dashed var(--border); color:var(--muted);';
+
+function stateBox(emptyText) {
+  if (loadError) return `<div style="${EMPTY_BOX}">Impossible de charger les annonces. <button class="btn btn-outline btn-sm" style="margin-left:8px;" onclick="loadData()">Réessayer</button></div>`;
+  if (!dataLoaded) return `<div style="${EMPTY_BOX}">Chargement des annonces...</div>`;
+  return `<div style="${EMPTY_BOX}">${emptyText}</div>`;
+}
+
+function renderChips() {
+  $('categoryChips').innerHTML = CATEGORIES.map(cat => `
+    <button class="chip ${cat === activeCat ? 'active' : ''}" onclick="setCategory('${esc(cat)}')">${esc(cat)}</button>
+  `).join('');
+}
+
+function setCategory(cat) {
+  activeCat = cat;
+  renderListings();
+}
+
+function getBadgeHTML(mode) {
+  if (mode === 'HYBRIDE') return '<span class="tag-pill tag-hybride">Échange + Soulte €</span>';
+  if (mode === 'VENTE') return '<span class="tag-pill tag-vente">Vente Occasion</span>';
+  return '<span class="tag-pill tag-troc">100 % Troc</span>';
+}
+
+function buildCardHTML(item) {
+  const isFav = favs.includes(item.id);
+  const st = voteStats(item.id);
+  const fairLabel = st.total ? `Équité : <strong>${Math.round(st.fair / st.total * 100)}%</strong> (${st.total} avis)` : 'Équité : pas encore de vote';
+  return `
+    <article class="card" onclick="openDetail('${esc(item.id)}')">
+      <div class="card-media">
+        <img src="${esc(item.image)}" alt="${esc(item.title)}" loading="lazy">
+        <div class="badge-stack">
+          ${getBadgeHTML(item.mode)}
+          ${item.boost ? '<span class="tag-pill tag-boost">À la une</span>' : ''}
+          ${item.images.length > 1 ? `<span class="tag-pill tag-troc">${item.images.length} photos</span>` : ''}
+        </div>
+        <button class="fav-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${esc(item.id)}')" title="Ajouter aux favoris">
+          ${isFav ? '♥' : '♡'}
+        </button>
+      </div>
+      <div class="card-content">
+        <div class="card-meta-top">
+          <span>${esc(item.city)} • ${esc(item.condition)}</span>
+          <span class="verified-dot">${esc(item.owner)}</span>
+        </div>
+        <div class="card-title">${esc(item.title)}</div>
+        <div class="card-price-row">
+          <span class="est-val">${esc(item.price)} €</span>
+          <span class="est-label">${item.mode === 'VENTE' ? 'Prix de vente' : 'Valeur estimée'}</span>
+        </div>
+        <div class="card-exchange-box">
+          <span>${item.mode === 'VENTE' ? 'Modalité :' : 'Contrepartie souhaitée :'}</span>
+          <strong>${esc(item.want)}</strong>
+        </div>
+      </div>
+      <div class="vote-strip" onclick="event.stopPropagation()">
+        <span>${fairLabel}</span>
+        <div class="vote-actions">
+          <button class="vote-mini-btn" onclick="castVote('${esc(item.id)}', true)">👍 Juste</button>
+          <button class="vote-mini-btn" onclick="castVote('${esc(item.id)}', false)">👎 Écart</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderListings() {
+  renderChips();
+  const q = $('searchQuery').value.toLowerCase().trim();
+  const city = $('searchCity').value.toLowerCase().trim();
+  const mode = $('filterMode').value;
+  const sort = $('sortOrder').value;
+
+  const filtered = listings.filter(item => {
+    const matchCat = activeCat === 'Toutes' || (activeCat === 'Favoris' && favs.includes(item.id)) || item.category === activeCat;
+    const matchMode = mode === 'ALL' || item.mode === mode;
+    const matchCity = !city || item.city.toLowerCase().includes(city);
+    const matchText = !q || [item.title, item.description, item.want, item.category].join(' ').toLowerCase().includes(q);
+    return matchCat && matchMode && matchCity && matchText;
+  });
+
+  if (sort === 'price_asc') filtered.sort((a, b) => a.price - b.price);
+  else if (sort === 'price_desc') filtered.sort((a, b) => b.price - a.price);
+  else filtered.sort((a, b) => (b.boost ? 1 : 0) - (a.boost ? 1 : 0));
+
+  $('resultsCount').textContent = `${filtered.length} annonce${filtered.length > 1 ? 's' : ''}`;
+  $('listingsGrid').innerHTML = filtered.length
+    ? filtered.map(buildCardHTML).join('')
+    : stateBox(listings.length ? 'Aucun article ne correspond à ces critères.' : 'Aucune annonce pour le moment. Soyez le premier à publier !');
+}
+
+function renderFilteredGrid(mode, containerId) {
+  const list = listings.filter(x => x.mode === mode);
+  $(containerId).innerHTML = list.length ? list.map(buildCardHTML).join('') : stateBox('Aucune annonce dans cette section pour le moment.');
+}
+
+function renderMyInventory() {
+  const mine = listings.filter(isMine);
+  $('myInventoryGrid').innerHTML = mine.length
+    ? mine.map(buildCardHTML).join('')
+    : stateBox("Vous n'avez pas encore publié d'article. Appuyez sur « + Déposer une annonce » pour démarrer.");
+}
+
+function toggleFav(id) {
+  if (!requireAuth(() => toggleFav(id), 'enregistrer des favoris')) return;
+  favs = favs.includes(id) ? favs.filter(x => x !== id) : [...favs, id];
+  saveLocal('avt_favs', favs);
+  renderCurrentView();
+}
+
+function openDetail(id) {
+  currentItem = listings.find(x => x.id === id);
+  if (!currentItem) return;
+  const x = currentItem;
+  $('detailTitle').textContent = x.title;
+  $('detailBody').innerHTML = `
+    <img id="detailMainImg" src="${esc(x.image)}" alt="${esc(x.title)}" style="width:100%; height:260px; object-fit:cover; border-radius:12px; margin-bottom:10px;">
+    ${x.images.length > 1 ? `<div class="thumbs">${x.images.map(src => `<img src="${esc(src)}" alt="" onclick="$('detailMainImg').src = this.src">`).join('')}</div>` : ''}
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+      ${getBadgeHTML(x.mode)}
+      <span style="font-size:13px; color:var(--muted);">📍 ${esc(x.city)} • Membre : <strong>${esc(x.owner)}</strong></span>
+    </div>
+    <div style="font-size:22px; font-weight:800; color:var(--green); margin-bottom:10px;">${esc(x.price)} € <span style="font-size:13px; font-weight:500; color:var(--muted);">(${esc(x.condition)})</span></div>
+    <p style="font-size:14px; color:var(--ink); line-height:1.6; margin-bottom:16px;">${esc(x.description)}</p>
+    <div style="background:var(--surface-2); padding:14px; border-radius:12px; border:1px solid var(--border); margin-bottom:18px;">
+      <div style="font-size:12px; font-weight:700; color:var(--green); text-transform:uppercase;">Conditions d'échange / vente</div>
+      <div style="font-size:14px; font-weight:600; margin-top:4px;">${esc(x.want)}</div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      ${isMine(x)
+        ? `<button class="btn btn-outline" style="flex:1;" onclick="deleteItem('${esc(x.id)}')">Supprimer mon annonce</button>`
+        : `<button class="btn btn-primary" style="flex:1;" onclick="$('detailModal').close(); openOfferModal()">${x.mode === 'VENTE' ? 'Acheter ou faire une offre' : x.mode === 'TROC' ? 'Proposer un échange' : 'Proposer un échange / soulte'}</button>`}
+    </div>
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button class="btn btn-outline" style="flex:1; padding:8px; font-size:13px;" onclick="shareItem('${esc(x.id)}')">Partager</button>
+      <button class="btn btn-outline" style="flex:1; padding:8px; font-size:13px;" onclick="reportItem('${esc(x.id)}')">Signaler</button>
+    </div>
+  `;
+  if (!$('detailModal').open) $('detailModal').showModal();
+}
+
+/* ===== Publication ===== */
+const FREE_PHOTOS = 3;
+const PHOTO_PACKS = [
+  { size: 5, price: 1.99, label: 'Forfait 5 photos' },
+  { size: 10, price: 3.99, label: 'Forfait 10 photos' }
+];
+const BOOST_PRICE = 2.90;
+const photoPackFor = n => n <= FREE_PHOTOS ? null : PHOTO_PACKS.find(p => n <= p.size) || PHOTO_PACKS[PHOTO_PACKS.length - 1];
+
+function openPostModal(defaultMode = 'TROC') {
+  if (!requireAuth(() => openPostModal(defaultMode), 'publier une annonce')) return;
+  $('postMode').value = defaultMode;
+  togglePostFields();
+  $('postModal').showModal();
+}
+
+function togglePostFields() {
+  const mode = $('postMode').value;
+  $('wantFieldGroup').style.display = mode === 'VENTE' ? 'none' : 'block';
+  $('postWantInput').required = mode !== 'VENTE';
+  $('wantLabel').textContent = mode === 'TROC'
+    ? 'Ce que vous recherchez en échange (objets uniquement, sans argent)'
+    : 'Ce que vous recherchez en échange (et conditions de soulte)';
+  $('postWantInput').placeholder = mode === 'TROC' ? 'Ex: MacBook Air ou Console PS5' : 'Ex: MacBook Air ou Console PS5 + rajout de ma part';
+  updatePhotoPack();
+}
+
+function updatePhotoPack() {
+  const n = $('postPhotoFile').files.length;
+  const pack = photoPackFor(Math.min(n, 10));
+  const tarifs = PHOTO_PACKS.map(p => `${p.label} : ${fmtEuro(p.price)}`).join(' • ');
+  let msg;
+  if (!n) msg = `Jusqu'à ${FREE_PHOTOS} photos gratuites. Au-delà : ${tarifs}.`;
+  else if (!pack) msg = `${n} photo${n > 1 ? 's' : ''} : gratuit.`;
+  else if (n > 10) msg = `10 photos maximum : seules les 10 premières seront conservées. ${pack.label} requis (${fmtEuro(pack.price)}).`;
+  else msg = `${n} photos : ${pack.label} requis (${fmtEuro(pack.price)}).`;
+  $('photoInfo').textContent = msg;
+}
+
+function compressImage(file) {
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onerror = () => res(null);
+    r.onload = () => {
+      const img = new Image();
+      img.onerror = () => res(null);
+      img.onload = () => {
+        const k = Math.min(1, 1000 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k);
+        c.height = Math.round(img.height * k);
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(b => res(b), 'image/jpeg', 0.75);
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+async function submitListing(e) {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const files = Array.from($('postPhotoFile').files).slice(0, 10);
+  const pack = photoPackFor(files.length);
+  if (pack && !confirm(`${pack.label} : ${fmtEuro(pack.price)} pour ${files.length} photos.\n\nLe paiement en ligne n'est pas encore branché : pour l'instant, le forfait est activé sans débit.\n\nContinuer ?`)) return;
+
+  await withBusy(form, 'Publication en cours...', async () => {
+    try {
+      const blobs = (await Promise.all(files.map(compressImage))).filter(Boolean);
+      const images = [];
+      for (let i = 0; i < blobs.length; i++) images.push(await uploadPhoto(blobs[i], i));
+      const mode = fd.get('mode');
+      const boost = Boolean(fd.get('boost'));
+      await db('listings', {
+        method: 'POST',
+        body: {
+          mode: mode,
+          title: String(fd.get('title')).trim(),
+          category: fd.get('category'),
+          condition: fd.get('condition'),
+          price: Math.round(Number(fd.get('price'))),
+          city: String(fd.get('city')).trim(),
+          want: mode === 'VENTE' ? `Vente directe ${fd.get('price')} €` : String(fd.get('want')).trim(),
+          description: String(fd.get('description')).trim(),
+          images: images,
+          boost: boost,
+          photo_pack: pack ? pack.size : 0
+        }
+      });
+      const pay = [];
+      if (pack) pay.push({ type: pack.label, amount: pack.price });
+      if (boost) pay.push({ type: 'Boost 48 h', amount: BOOST_PRICE });
+      if (pay.length) await db('payments', { method: 'POST', body: pay }).catch(() => {});
+      form.reset();
+      $('postModal').close();
+      notify('Votre annonce est en ligne, visible par tous les membres.');
+      await loadData();
+    } catch (err) {
+      notify(err.message);
+    }
+  });
+}
+
+async function deleteItem(id) {
+  if (!confirm('Supprimer définitivement cette annonce ?')) return;
+  try {
+    await db('listings?id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+    $('detailModal').close();
+    notify('Annonce supprimée.');
+    await loadData();
+  } catch (err) {
+    notify(err.message);
+  }
+}
+
+/* ===== Propositions ===== */
+function openOfferModal() {
+  if (!requireAuth(() => openOfferModal(), 'faire une proposition')) return;
+  if (!currentItem) return;
+  if (isMine(currentItem)) { notify("C'est votre propre annonce."); return; }
+  const mode = currentItem.mode;
+  $('offerTypeSelect').innerHTML = mode === 'TROC'
+    ? '<option value="TROC">Échange 100 % troc (sans argent)</option>'
+    : mode === 'VENTE'
+      ? '<option value="ACHAT">Achat direct au prix demandé (€)</option><option value="HYBRIDE">Échange d\'objet(s) + soulte (€)</option>'
+      : '<option value="HYBRIDE">Échange d\'objet(s) + soulte (€)</option><option value="ACHAT">Achat direct au prix demandé (€)</option>';
+  $('extraItems').innerHTML = '';
+  $('offerSender').value = currentUser.name;
+  $('soulteHint').textContent = '';
+  updateOfferBuilder();
+  $('offerModal').showModal();
+}
+
+function updateOfferBuilder() {
+  const type = $('offerTypeSelect').value;
+  $('offerObjectGroup').style.display = type === 'ACHAT' ? 'none' : 'block';
+  $('offerCashGroup').style.display = type === 'HYBRIDE' ? 'block' : 'none';
+  updateEquity();
+}
+
+function offeredItems() {
+  const items = [];
+  const name = $('offeredItemInput').value.trim();
+  const value = Number($('offeredValueInput').value) || 0;
+  if (name || value) items.push({ name: name, value: value });
+  document.querySelectorAll('#extraItems .extra-row').forEach(row => {
+    const n = row.querySelector('.extra-name').value.trim();
+    const v = Number(row.querySelector('.extra-value').value) || 0;
+    if (n || v) items.push({ name: n, value: v });
+  });
+  return items;
+}
+const offeredTotal = () => offeredItems().reduce((acc, i) => acc + i.value, 0);
+
+function addOfferItem() {
+  if (document.querySelectorAll('#extraItems .extra-row').length >= 4) { notify('5 objets maximum par proposition.'); return; }
+  const row = document.createElement('div');
+  row.className = 'form-row extra-row';
+  row.style.marginTop = '8px';
+  row.innerHTML = '<input class="form-control extra-name" placeholder="Autre objet proposé" oninput="onOfferValues()">'
+    + '<input class="form-control extra-value" type="number" min="0" placeholder="Valeur (€)" oninput="onOfferValues()">';
+  $('extraItems').appendChild(row);
+}
+
+function onOfferValues() { suggestSoulte(); updateEquity(); }
+
+function suggestSoulte() {
+  const v = offeredTotal();
+  const hint = $('soulteHint');
+  if (!v || !currentItem) { hint.textContent = ''; return; }
+  const diff = currentItem.price - v;
+  if (diff > 0) {
+    $('cashDirSelect').value = 'ADD';
+    $('cashAmountInput').value = diff;
+    hint.textContent = `Écart de ${diff} € : soulte équitable suggérée, vous rajoutez ${diff} €. Montant modifiable.`;
+  } else if (diff < 0) {
+    $('cashDirSelect').value = 'ASK';
+    $('cashAmountInput').value = -diff;
+    hint.textContent = `Votre objet vaut ${-diff} € de plus : soulte équitable suggérée, vous demandez ${-diff} €. Montant modifiable.`;
+  } else {
+    $('cashAmountInput').value = 0;
+    hint.textContent = 'Valeurs équivalentes : un troc sans soulte est équitable.';
+  }
+}
+
+function updateEquity() {
+  const box = $('equityHint');
+  if ($('offerTypeSelect').value !== 'TROC' || !currentItem) { box.innerHTML = ''; return; }
+  const total = offeredTotal();
+  const price = currentItem.price;
+  const pct = Math.min(100, Math.round(total / price * 100));
+  let msg;
+  if (!total) msg = `Échange 100 % troc, sans argent. Indiquez la valeur de vos objets : l'annonce est estimée à ${price} €.`;
+  else if (total < price * 0.9) msg = `Il manque environ ${price - total} € de valeur. Ajoutez un autre objet pour équilibrer : pas de complément en argent dans cet espace.`;
+  else if (total > price * 1.1) msg = `Votre lot vaut ${total - price} € de plus que l'annonce. Vous pouvez retirer un objet ou demander au propriétaire d'en ajouter un.`;
+  else msg = `Échange équitable : ${total} € contre ${price} €.`;
+  box.innerHTML = `<div class="trust-bar"><span style="width:${pct}%"></span></div>${esc(msg)}`;
+}
+
+async function submitOffer(e) {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const type = fd.get('offerType');
+  const cash = Number(fd.get('cashAmount') || 0);
+  const dir = fd.get('cashDirection');
+  const items = offeredItems();
+  const total = offeredTotal();
+  if (type !== 'ACHAT' && !items.length) { notify('Indiquez au moins un objet proposé en échange.'); return; }
+  if (type === 'TROC' && total < currentItem.price * 0.9) {
+    notify("Échange non équitable : ajoutez un autre objet pour atteindre la valeur de l'annonce. Pas d'argent dans cet espace.");
+    return;
+  }
+  const itemsLabel = items.map(i => i.name).filter(Boolean).join(' + ') || 'Lot proposé';
+  let summary;
+  if (type === 'ACHAT') summary = `Achat direct : ${currentItem.price} €`;
+  else if (type === 'TROC') summary = `Troc 100 % : ${itemsLabel} (${total} €)`;
+  else summary = `Troc : ${itemsLabel} (${dir === 'ADD' ? '+' : '-'} ${cash} €)`;
+
+  await withBusy(form, 'Envoi...', async () => {
+    try {
+      await db('offers', {
+        method: 'POST',
+        body: {
+          listing_id: currentItem.id,
+          listing_title: currentItem.title,
+          owner_id: currentItem.ownerId,
+          summary: summary,
+          message: String(fd.get('message')).trim()
+        }
+      });
+      if ($('submitToPublicVote').checked && type !== 'ACHAT') {
+        await db('polls', {
+          method: 'POST',
+          body: {
+            item_a: `${currentItem.title} (${currentItem.price} €)`,
+            img_a: currentItem.image,
+            item_b: itemsLabel + (total ? ` (${total} €)` : ''),
+            cash: type === 'HYBRIDE' ? `${dir === 'ADD' ? '+' : '-'} ${cash} € de soulte` : 'Sans soulte financière'
+          }
+        }).catch(() => {});
+      }
+      form.reset();
+      $('offerModal').close();
+      notify('Votre proposition a été transmise au propriétaire.');
+      await loadData();
+    } catch (err) {
+      notify(err.message);
+    }
+  });
+}
+
+async function openInbox() {
+  if (!requireAuth(openInbox, 'accéder à votre messagerie')) return;
+  renderInbox();
+  if (!$('inboxModal').open) $('inboxModal').showModal();
+  await loadData();
+  renderInbox();
+}
+
+function renderInbox() {
+  const list = myOffers();
+  $('inboxList').innerHTML = list.length
+    ? list.map(o => {
+      const received = o.ownerId === currentUser.id;
+      const cls = o.status === 'Acceptée' ? 'status-ok' : o.status === 'Refusée' ? 'status-no' : '';
+      return `
+      <div style="border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; background:var(--surface-2);">
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:4px;">
+          <span>${received ? 'Reçue de' : 'Envoyée par'} : <strong>${esc(received ? o.sender : 'vous')}</strong></span>
+          <span>${esc(o.date)}</span>
+        </div>
+        <div style="font-size:14px; font-weight:700; color:var(--green); margin-bottom:6px;">Concerne : ${esc(o.targetTitle)}</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+          <span style="background:var(--lime); color:var(--green); font-size:12px; font-weight:700; padding:3px 8px; border-radius:6px;">${esc(o.summary)}</span>
+          <span class="status-pill ${cls}">${esc(o.status)}</span>
+        </div>
+        <p style="font-size:13px; color:var(--ink);">${esc(o.message)}</p>
+        ${o.code ? `<div class="hint" style="margin:10px 0 0;">Code de remise TrocPass : <strong>${esc(o.code)}</strong> — à échanger lors de la remise en main propre.</div>` : ''}
+        ${received && o.status === 'En attente' ? `
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button class="btn btn-primary" style="flex:1; padding:7px; font-size:13px;" onclick="decideOffer('${esc(o.id)}', true)">Accepter</button>
+            <button class="btn btn-outline" style="flex:1; padding:7px; font-size:13px;" onclick="decideOffer('${esc(o.id)}', false)">Refuser</button>
+          </div>` : ''}
+      </div>`;
+    }).join('')
+    : '<p style="text-align:center; color:var(--muted); padding:24px;">Aucune proposition pour le moment.</p>';
+}
+
+async function decideOffer(id, accept) {
+  try {
+    await db('offers?id=eq.' + encodeURIComponent(id), {
+      method: 'PATCH',
+      body: accept
+        ? { status: 'Acceptée', code: String(Math.floor(100000 + Math.random() * 900000)) }
+        : { status: 'Refusée' }
+    });
+    notify(accept ? 'Proposition acceptée. Code de remise TrocPass généré.' : 'Proposition refusée.');
+    await loadData();
+    renderInbox();
+  } catch (err) {
+    notify(err.message);
+  }
+}
+
+/* ===== Votes ===== */
+async function castVote(targetId, isFair) {
+  if (!requireAuth(() => castVote(targetId, isFair), 'voter')) return;
+  try {
+    await db('votes?on_conflict=target_id,user_id', {
+      method: 'POST',
+      prefer: 'resolution=merge-duplicates',
+      body: { target_id: targetId, fair: isFair }
+    });
+    notify('Votre vote est enregistré (un vote par membre).');
+    await loadData();
+  } catch (err) {
+    notify(err.message);
+  }
+}
+
+function renderVotes() {
+  $('votesContainer').innerHTML = votes.length ? votes.map(v => {
+    const st = voteStats(v.id);
+    const label = st.total ? `Équité jugée à <strong>${Math.round(st.fair / st.total * 100)}%</strong> (${st.total} votes)` : 'Pas encore de vote';
+    return `
+      <div class="vote-card">
+        <div class="vote-item">
+          <img src="${esc(v.imgA)}" alt="">
+          <div>
+            <span style="font-size:11px; text-transform:uppercase; color:var(--muted); font-weight:700;">Article proposé</span>
+            <h4 style="font-size:15px; color:var(--ink); margin-top:2px;">${esc(v.itemA)}</h4>
+          </div>
+        </div>
+        <div class="vote-vs">
+          <div style="font-weight:800; color:var(--green); font-size:14px;">⇄ ÉCHANGE</div>
+          <div style="background:var(--lime); color:var(--green); font-size:12px; font-weight:700; padding:4px 10px; border-radius:8px; margin:6px 0;">${esc(v.cash)}</div>
+          <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">${label}</div>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <button class="btn btn-primary" style="padding:6px 12px; font-size:12px;" onclick="castVote('${esc(v.id)}', true)">👍 Équitable (${st.fair})</button>
+            <button class="btn btn-outline" style="padding:6px 12px; font-size:12px;" onclick="castVote('${esc(v.id)}', false)">👎 Déséquilibré (${st.unfair})</button>
+          </div>
+        </div>
+        <div class="vote-item" style="justify-content:flex-end; text-align:right;">
+          <div>
+            <span style="font-size:11px; text-transform:uppercase; color:var(--muted); font-weight:700;">Contrepartie</span>
+            <h4 style="font-size:15px; color:var(--ink); margin-top:2px;">${esc(v.itemB)}</h4>
+          </div>
+          <img src="${esc(v.imgB)}" alt="">
+        </div>
+      </div>
+    `;
+  }).join('') : stateBox("Aucun échange soumis au vote pour le moment.").replace('grid-column:1/-1; ', '');
+}
+
+function openNewVoteModal() {
+  if (!requireAuth(openNewVoteModal, 'soumettre un échange au vote')) return;
+  $('voteModal').showModal();
+}
+
+async function createVotePoll(e) {
+  e.preventDefault();
+  const form = e.target;
+  await withBusy(form, 'Publication...', async () => {
+    try {
+      await db('polls', {
+        method: 'POST',
+        body: { item_a: $('voteItemA').value.trim(), item_b: $('voteItemB').value.trim(), cash: `+ ${Number($('voteCash').value) || 0} € de soulte proposée` }
+      });
+      form.reset();
+      $('voteModal').close();
+      notify('Échange soumis au vote de la communauté.');
+      await loadData();
+    } catch (err) {
+      notify(err.message);
+    }
+  });
+}
+
+/* ===== Correspondances, déclic, radar ===== */
+const STOP_WORDS = new Set(['avec', 'pour', 'sans', 'dans', 'plus', 'contre', 'possible', 'selon', 'état', 'très', 'vente', 'directe', 'rajout', 'échange', 'soulte', 'modèle', 'part', 'haut', 'gamme', 'récent', 'financier']);
+const tokens = t => String(t || '').toLowerCase().split(/[^a-zà-ÿ0-9]+/).filter(w => w.length > 3 && !STOP_WORDS.has(w));
+
+function findMatches() {
+  const mine = listings.filter(isMine);
+  const out = [];
+  listings.filter(x => !isMine(x)).forEach(other => {
+    mine.forEach(m => {
+      const myWords = tokens(m.title + ' ' + m.category);
+      const theirWords = tokens(other.title + ' ' + other.category);
+      const theyWantMine = tokens(other.want).some(w => myWords.includes(w));
+      const iWantTheirs = tokens(m.want).some(w => theirWords.includes(w));
+      if (theyWantMine || iWantTheirs) out.push({ mine: m, other: other, both: theyWantMine && iWantTheirs, diff: other.price - m.price });
+    });
+  });
+  return out.sort((a, b) => Number(b.both) - Number(a.both)).slice(0, 6);
+}
+
+function renderMatches() {
+  const panel = $('matchPanel');
+  if (!currentUser || !listings.some(isMine)) { panel.innerHTML = ''; return; }
+  const matches = findMatches();
+  panel.innerHTML = `
+    <div class="match-panel">
+      <h3 style="font-size:15px; color:var(--green); margin-bottom:4px;">Correspondances pour vos articles</h3>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">Annonces compatibles avec ce que vous proposez ou recherchez, avec l'écart de valeur.</p>
+      ${matches.length ? matches.map(m => `
+        <div class="match-row">
+          <div>
+            <span class="status-pill ${m.both ? 'status-ok' : ''}">${m.both ? 'Match réciproque' : 'Piste'}</span>
+            <div style="margin-top:4px;"><strong>${esc(m.mine.title)}</strong> ⇄ <strong>${esc(m.other.title)}</strong> (${esc(m.other.city)})</div>
+            <div style="color:var(--muted);">${m.diff > 0 ? `Écart : il vous manque ${m.diff} € de valeur` : m.diff < 0 ? `Écart : votre objet vaut ${-m.diff} € de plus` : 'Valeurs équivalentes'}</div>
+          </div>
+          <button class="btn btn-outline" style="padding:6px 12px; font-size:12px;" onclick="openDetail('${esc(m.other.id)}')">Voir</button>
+        </div>
+      `).join('') : '<div class="match-row" style="color:var(--muted);">Aucune correspondance pour le moment. Elles apparaîtront ici dès qu\'une annonce sera compatible.</div>'}
+    </div>
+  `;
+}
+
+function openDeclic() { $('declicModal').showModal(); runDeclic(); }
+function runDeclic() {
+  const q = $('declicQuery').value.toLowerCase().trim();
+  const matches = q ? listings.filter(x => x.want.toLowerCase().includes(q) || x.category.toLowerCase().includes(q)) : [];
+  $('declicResults').innerHTML = matches.length
+    ? matches.map(m => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid var(--border);">
+        <div>
+          <strong style="font-size:14px;">${esc(m.title)}</strong> (${esc(m.city)})
+          <div style="font-size:12px; color:var(--green);">Recherche : ${esc(m.want)}</div>
+        </div>
+        <button class="btn btn-outline" style="padding:6px 12px; font-size:12px;" onclick="$('declicModal').close(); openDetail('${esc(m.id)}')">Voir</button>
+      </div>
+    `).join('')
+    : `<p style="font-size:13px; color:var(--muted); text-align:center; padding:16px;">${q ? 'Aucun membre ne recherche cet objet pour le moment.' : 'Tapez un objet que vous possédez (ex: MacBook, Console, Vélo) pour détecter les membres intéressés.'}</p>`;
+}
+
+function openRadar() {
+  if (!requireAuth(openRadar, 'créer une alerte')) return;
+  renderRadarSaved();
+  $('radarModal').showModal();
+}
+function saveRadar(e) {
+  e.preventDefault();
+  radars.push({ key: $('radarKey').value, max: $('radarMax').value || 'Illimité' });
+  saveLocal('avt_radars', radars);
+  e.target.reset();
+  renderRadarSaved();
+  updateKPIs();
+  notify('Alerte enregistrée sur cet appareil.');
+}
+function removeRadar(i) {
+  radars.splice(i, 1);
+  saveLocal('avt_radars', radars);
+  renderRadarSaved();
+  updateKPIs();
+}
+function renderRadarSaved() {
+  $('radarSavedList').innerHTML = radars.map((r, i) => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-2); border-radius:8px; margin-bottom:6px; font-size:13px;">
+      <span><strong>${esc(r.key)}</strong> (Max: ${esc(r.max)} €)</span>
+      <button class="btn btn-outline" style="padding:3px 8px; font-size:11px;" onclick="removeRadar(${i})">Retirer</button>
+    </div>
+  `).join('');
+}
+
+/* ===== Partage et signalement ===== */
+function shareItem(id) {
+  const x = listings.find(l => l.id === id);
+  if (!x) return;
+  const text = `${x.title} — ${x.price} € sur À Vos Trocs`;
+  if (navigator.share) navigator.share({ title: x.title, text: text, url: location.href }).catch(() => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + location.href).then(() => notify('Lien copié dans le presse-papiers.'));
+  else notify('Partage indisponible sur cet appareil.');
+}
+
+async function reportItem(id) {
+  if (!requireAuth(() => reportItem(id), 'signaler une annonce')) return;
+  const reason = prompt('Motif du signalement (arnaque, contrefaçon, contenu inapproprié...) :');
+  if (!reason || !reason.trim()) return;
+  try {
+    await db('reports', { method: 'POST', body: { listing_id: id, reason: reason.trim().slice(0, 500) } });
+    notify('Signalement transmis à l\'administrateur. Merci pour votre vigilance.');
+  } catch (err) {
+    notify(err.message);
+  }
+}
+
+/* ===== Administration ===== */
+let adminState = null;
+const MODE_LABELS = { TROC: '100 % troc', HYBRIDE: 'Échange + soulte', VENTE: 'Vente directe' };
+const memberName = id => (profiles[id] || {}).name || '—';
+
+async function openAdmin() {
+  if (!requireAuth(openAdmin, "accéder à l'administration")) return;
+  try {
+    let ok = await db('rpc/admin_access', { method: 'POST', body: {} });
+    if (!ok) {
+      const code = prompt('Code administrateur :');
+      if (!code || !code.trim()) return;
+      ok = await db('rpc/admin_access', { method: 'POST', body: { p_code: code.trim() } });
+    }
+    if (!ok) { adminState = null; notify("Code incorrect. Accès réservé à l'administrateur."); return; }
+    const [members, allOffers, payments, reports] = await Promise.all([
+      db('rpc/admin_members', { method: 'POST', body: {} }),
+      db('offers?select=*&order=created_at.desc'),
+      db('payments?select=*&order=created_at.desc'),
+      db('reports?select=*&order=created_at.desc')
+    ]);
+    await loadData();
+    adminState = { members, offers: allOffers.map(mapOffer), payments, reports };
+    showView('admin');
+  } catch (err) {
+    notify(err.message);
+  }
+}
+
+function adminData(kind) {
+  const a = adminState;
+  if (kind === 'membres') return {
+    heads: ['Nom', 'E-mail', 'Ville', 'Inscrit le', 'Annonces', 'Propositions'],
+    rows: a.members.map(u => [u.name, u.email, u.city, dateFR(u.created_at),
+      listings.filter(x => x.ownerId === u.id).length, a.offers.filter(o => o.senderId === u.id).length])
+  };
+  if (kind === 'annonces') return {
+    heads: ['Titre', 'Espace', 'Catégorie', 'Valeur (€)', 'Ville', 'Propriétaire', 'Publiée le', 'Photos', 'Boost', 'Équité'],
+    rows: listings.map(x => {
+      const st = voteStats(x.id);
+      return [x.title, MODE_LABELS[x.mode] || x.mode, x.category, x.price, x.city, x.owner, dateFR(x.createdAt),
+        x.images.length, x.boost ? 'Oui' : 'Non', st.total ? Math.round(st.fair / st.total * 100) + ' %' : '—'];
+    })
+  };
+  if (kind === 'propositions') return {
+    heads: ['Date', 'De', 'Pour', 'Annonce', 'Proposition', 'Statut'],
+    rows: a.offers.map(o => [o.date, o.sender, memberName(o.ownerId), o.targetTitle, o.summary, o.status])
+  };
+  if (kind === 'paiements') return {
+    heads: ['Date', 'Membre', 'Type', 'Montant (€)', 'Statut'],
+    rows: a.payments.map(p => [dateFR(p.created_at), memberName(p.user_id), p.type, Number(p.amount).toFixed(2).replace('.', ','), p.status])
+  };
+  return {
+    heads: ['Date', 'Annonce', 'Motif', 'Signalé par'],
+    rows: a.reports.map(r => [dateFR(r.created_at), (listings.find(x => x.id === r.listing_id) || {}).title || 'Annonce supprimée', r.reason, memberName(r.reporter_id)])
+  };
+}
+
+function adminTable(heads, rows) {
+  if (!rows.length) return '<p class="adm-empty">Aucune donnée pour le moment.</p>';
+  return `<div class="table-wrap"><table class="adm"><thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead>`
+    + `<tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+
+function adminSection(title, kind, extraCol) {
+  const d = adminData(kind);
+  const rows = d.rows.map((r, i) => r.map(esc).concat(extraCol ? [extraCol(i)] : []));
+  return `<div class="adm-card">
+    <div class="adm-head">
+      <h3>${title} (${d.rows.length})</h3>
+      <button class="btn btn-outline btn-sm" onclick="exportCSV('${kind}')">Exporter (Excel)</button>
+    </div>
+    ${adminTable(extraCol ? d.heads.concat(['Action']) : d.heads, rows)}
+  </div>`;
+}
+
+function renderAdmin() {
+  if (!adminState) return;
+  const a = adminState;
+  $('kpiUsers').textContent = a.members.length;
+  $('kpiListings').textContent = listings.length;
+  $('kpiVolume').textContent = listings.reduce((acc, x) => acc + (x.price || 0), 0).toLocaleString('fr-FR') + ' €';
+  $('kpiOffers').textContent = a.offers.length;
+  $('kpiVotes').textContent = voteRows.length;
+  $('kpiRevenue').textContent = fmtEuro(a.payments.reduce((acc, p) => acc + Number(p.amount), 0));
+  $('kpiReports').textContent = a.reports.length;
+
+  const byMode = Object.keys(MODE_LABELS).map(m => {
+    const l = listings.filter(x => x.mode === m);
+    return [MODE_LABELS[m], l.length, fmtEuro(l.reduce((s, x) => s + (x.price || 0), 0))];
+  });
+  const cats = {};
+  listings.forEach(x => { (cats[x.category] = cats[x.category] || []).push(x); });
+  const byCat = Object.keys(cats).map(c => [esc(c), cats[c].length, fmtEuro(cats[c].reduce((s, x) => s + (x.price || 0), 0))]);
+  const statuses = ['En attente', 'Acceptée', 'Refusée'].map(st => [st, a.offers.filter(o => o.status === st).length]);
+  const payTypes = {};
+  a.payments.forEach(p => { payTypes[p.type] = (payTypes[p.type] || 0) + Number(p.amount); });
+
+  $('adminBody').innerHTML = `
+    <p class="demo-note" style="margin:0 0 16px;">Données en direct de la base en ligne. Les paiements sont marqués « Simulé » tant que le paiement en ligne n'est pas branché.</p>
+    <div class="adm-card">
+      <div class="adm-head"><h3>Répartition des annonces</h3></div>
+      ${adminTable(['Espace', 'Annonces', 'Valeur'], byMode)}
+      <div style="height:14px;"></div>
+      ${adminTable(['Catégorie', 'Annonces', 'Valeur'], byCat)}
+    </div>
+    <div class="adm-card">
+      <div class="adm-head"><h3>Propositions et recettes</h3></div>
+      ${adminTable(['Statut des propositions', 'Nombre'], statuses)}
+      <div style="height:14px;"></div>
+      ${adminTable(['Option vendue', 'Recettes'], Object.keys(payTypes).map(t => [esc(t), fmtEuro(payTypes[t])]))}
+    </div>
+    ${adminSection('Membres', 'membres')}
+    ${adminSection('Annonces', 'annonces', i => `<button class="btn btn-outline btn-sm" onclick="adminDeleteListing('${esc(listings[i].id)}')">Supprimer</button>`)}
+    ${adminSection('Propositions', 'propositions')}
+    ${adminSection('Paiements', 'paiements')}
+    ${adminSection('Signalements', 'signalements', i => `<button class="btn btn-outline btn-sm" onclick="adminDismissReport('${esc(a.reports[i].id)}')">Classer</button>`)}
+    <div class="adm-card">
+      <div class="adm-head"><h3>Tarifs en vigueur</h3></div>
+      ${adminTable(['Option', 'Prix'], [['Photos (jusqu\'à ' + FREE_PHOTOS + ')', 'Gratuit']].concat(PHOTO_PACKS.map(p => [p.label, fmtEuro(p.price)]), [['Boost 48 h', fmtEuro(BOOST_PRICE)]]))}
+    </div>
+  `;
+}
+
+async function adminDeleteListing(id) {
+  if (!confirm('Supprimer définitivement cette annonce ?')) return;
+  try {
+    await db('listings?id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+    notify('Annonce supprimée.');
+    await openAdmin();
+  } catch (err) {
+    notify(err.message);
+  }
+}
+
+async function adminDismissReport(id) {
+  try {
+    await db('reports?id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+    notify('Signalement classé.');
+    await openAdmin();
+  } catch (err) {
+    notify(err.message);
+  }
+}
+
+function exportCSV(kind) {
+  const d = adminData(kind);
+  const cell = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const csv = '﻿' + [d.heads].concat(d.rows).map(r => r.map(cell).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = `a-vos-trocs-${kind}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function updateKPIs() {
+  $('myCount').textContent = listings.filter(isMine).length;
+  $('msgCount').textContent = myOffers().length;
+  $('radarBadge').textContent = radars.length;
+}
+
+/* ===== Installation de l'application ===== */
+let installEvent = null;
+
+function setupInstall() {
+  const bar = $('installBar');
+  const ua = navigator.userAgent;
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  let dismissed = false;
+  try { dismissed = sessionStorage.getItem('avt_install_hidden') === '1'; } catch {}
+  if (standalone || dismissed) return;
+
+  const inApp = /Instagram|FBAN|FBAV|FB_IAB|Snapchat|TikTok|musical_ly|Bytedance/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const show = (text, btnLabel, action) => {
+    bar.innerHTML = `<span>${text}</span><div class="install-actions"><button class="btn btn-primary btn-sm" id="installBtn">${btnLabel}</button><button class="close-btn" id="installClose" aria-label="Fermer">×</button></div>`;
+    bar.hidden = false;
+    $('installBtn').onclick = action;
+    $('installClose').onclick = () => {
+      bar.hidden = true;
+      try { sessionStorage.setItem('avt_install_hidden', '1'); } catch {}
+    };
+  };
+
+  if (inApp) {
+    show(`Pour installer l'application, ouvrez ce lien dans ${isIOS ? 'Safari' : 'Chrome'} : menu ⋯ puis « Ouvrir dans le navigateur ».`, 'Copier le lien', () => {
+      if (navigator.clipboard) navigator.clipboard.writeText(location.href).then(() => notify('Lien copié. Collez-le dans votre navigateur.'));
+      else notify(location.href);
+    });
+  } else if (isIOS) {
+    show("Installez À Vos Trocs sur votre iPhone.", 'Comment faire', () => $('iosModal').showModal());
+  } else {
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      installEvent = e;
+      show("Installez l'application À Vos Trocs sur votre téléphone.", 'Installer', async () => {
+        if (!installEvent) return;
+        installEvent.prompt();
+        await installEvent.userChoice.catch(() => {});
+        installEvent = null;
+        bar.hidden = true;
+      });
+    });
+    window.addEventListener('appinstalled', () => { bar.hidden = true; notify('Application installée.'); });
+  }
+}
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+/* ===== Démarrage ===== */
+setupInstall();
+refreshAccountUI();
+renderListings();
+loadData();
+</script>
+</body>
+</html>
