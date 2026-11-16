@@ -594,6 +594,7 @@ table.adm tr:last-child td { border-bottom: 0; }
 .install-bar[hidden] { display: none; }
 .install-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 button:disabled { opacity: 0.6; cursor: wait; }
+body{padding-bottom:58px;}
 </style>
 </head>
 <body>
@@ -2898,7 +2899,7 @@ function setupInstall() {
   }
 }
 
-const APP_VERSION='2026-11-16-3';
+const APP_VERSION='2026-11-16-4';
 (function(){
   async function checkVersion(){
     try{
@@ -2930,19 +2931,19 @@ loadData();
 </script>
 
 <!-- Ambiance : voix de bienvenue et musique douce (facultatives) -->
-<div id="aiPanel" style="display:none; position:fixed; left:10px; right:10px; bottom:62px; max-width:420px; max-height:62vh; z-index:60; flex-direction:column; background:var(--surface,#161b1a); color:var(--ink,#fff); border:1px solid var(--border,#333); border-radius:18px; box-shadow:0 12px 40px rgba(0,0,0,.5); overflow:hidden;">
-  <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; font-weight:700; border-bottom:1px solid var(--border,#333);"><span>🤖 Assistant À Vos Trocs</span><button type="button" onclick="toggleAssistant()" aria-label="Fermer" style="border:0; background:transparent; color:inherit; font-size:20px; cursor:pointer;">×</button></div>
-  <div id="aiMsgs" style="flex:1; overflow-y:auto; padding:8px 12px; min-height:120px;"></div>
-  <form onsubmit="assistantSend(); return false;" style="display:flex; gap:6px; padding:8px; border-top:1px solid var(--border,#333);">
-    <button type="button" id="aiMic" onclick="assistantListen()" aria-label="Parler" style="width:40px; border-radius:50%; border:0; background:var(--surface-2,#222); color:inherit; font-size:17px; cursor:pointer;">🎤</button>
-    <input id="aiInput" autocomplete="off" placeholder="Ex : vélo au Havre moins de 200 €" style="flex:1; min-width:0; border-radius:999px; border:1px solid var(--border,#333); background:var(--surface-2,#222); color:inherit; padding:10px 14px; font-size:16px;">
-    <button type="submit" style="border:0; border-radius:999px; background:#f7d47c; color:#15120a; font-weight:700; padding:0 14px; cursor:pointer;">OK</button>
+<div id="aiPanel" style="position:fixed; left:0; right:0; bottom:0; z-index:60; display:flex; flex-direction:column; background:var(--surface,#161b1a); color:var(--ink,#fff); border-top:1px solid var(--border,#333); box-shadow:0 -6px 24px rgba(0,0,0,.35); padding-bottom:env(safe-area-inset-bottom);">
+  <div id="aiMsgs" style="display:none; overflow-y:auto; max-height:34vh; padding:6px 12px;"></div>
+  <form onsubmit="assistantSend(); return false;" style="display:flex; align-items:center; gap:6px; padding:6px 8px;">
+    <span title="Agent À Vos Trocs" style="flex:none; display:inline-flex; align-items:center; gap:4px; background:#f7d47c; color:#15120a; font-weight:800; font-size:11px; letter-spacing:.3px; padding:4px 7px; border-radius:7px;">🤖 AGENT</span>
+    <input id="aiInput" autocomplete="off" placeholder="Que cherches-tu ? (ex : vélo au Havre)" style="flex:1; min-width:0; height:34px; border-radius:8px; border:1px solid var(--border,#333); background:var(--surface-2,#222); color:inherit; padding:0 10px; font-size:16px;">
+    <button type="button" id="aiMic" onclick="assistantListen()" aria-label="Parler" style="flex:none; width:34px; height:34px; border-radius:8px; border:0; background:var(--surface-2,#222); color:inherit; font-size:15px; cursor:pointer;">🎤</button>
+    <button type="submit" aria-label="Envoyer" style="flex:none; height:34px; border:0; border-radius:8px; background:#f7d47c; color:#15120a; font-weight:700; padding:0 11px; cursor:pointer;">OK</button>
+    <button type="button" id="aiToggle" onclick="toggleAssistant()" aria-label="Afficher ou masquer les réponses" style="flex:none; width:30px; height:34px; border:0; background:transparent; color:inherit; font-size:16px; cursor:pointer;">▾</button>
   </form>
 </div>
-<div id="soundDock" style="position:fixed; left:12px; bottom:12px; z-index:50; display:flex; gap:8px;">
+<div id="soundDock" style="position:fixed; left:12px; bottom:64px; z-index:50; display:flex; gap:8px;">
   <button id="musicBtn" type="button" onclick="toggleMusic()" aria-pressed="false" title="Musique d'ambiance" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🎵 Musique</button>
   <button id="voiceBtn" type="button" onclick="toggleVoice()" aria-pressed="true" title="Voix de bienvenue" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🔊 Voix</button>
-  <button id="aiBtn" type="button" onclick="toggleAssistant()" title="Assistant" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🤖 Assistant</button>
 </div>
 <script>
 /* ===== Voix, musique d'ambiance et assistant (tout est généré dans le navigateur, gratuit, sans droit d'auteur) ===== */
@@ -2990,7 +2991,7 @@ loadData();
       const v = bestVoice();
       parts.forEach((p, i) => {
         const u = new SpeechSynthesisUtterance(p.trim());
-        u.lang = 'fr-FR'; u.rate = 1.04; u.pitch = /!/.test(p) ? 1.14 : 1.06; u.volume = 1;
+        u.lang = 'fr-FR'; u.rate = 1; u.pitch = 1; u.volume = 1;
         if (v) u.voice = v;
         speechSynthesis.speak(u);
       });
@@ -3193,17 +3194,16 @@ loadData();
   }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+  function showMsgs(on) { const m = $a('aiMsgs'); if (!m) return; m.style.display = on ? 'block' : 'none'; const t = $a('aiToggle'); if (t) t.textContent = on ? '▾' : '▴'; if (on) m.scrollTop = m.scrollHeight; }
   function openAssistant(firstMsg) {
-    const p = $a('aiPanel'); if (!p) return;
-    p.style.display = 'flex';
-    if (firstMsg && !p.dataset.greeted) { p.dataset.greeted = '1'; addMsg(esc(firstMsg), 'bot'); }
-    else if (firstMsg) { addMsg(esc(firstMsg), 'bot'); }
+    if (!$a('aiPanel')) return;
+    if (firstMsg) addMsg(esc(firstMsg), 'bot');
+    showMsgs(true);
   }
   window.toggleAssistant = function () {
-    const p = $a('aiPanel'); if (!p) return;
-    if (p.style.display === 'flex') { p.style.display = 'none'; return; }
-    openAssistant(p.dataset.greeted ? '' : 'Salut ! Dis-moi ce que tu cherches : un objet, une ville, un budget. Par exemple « vélo au Havre moins de 200 € ».');
-    $a('aiInput').focus();
+    const m = $a('aiMsgs'); if (!m) return;
+    if (m.style.display === 'none' && !m.children.length) addMsg('Salut ! Dis-moi ce que tu cherches : un objet, une ville, un budget.', 'bot');
+    showMsgs(m.style.display === 'none');
   };
   window.assistantListen = function () {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3217,13 +3217,13 @@ loadData();
   };
   window.assistantSend = function () {
     const inp = $a('aiInput'); const q = inp.value.trim(); if (!q) return;
-    inp.value = ''; addMsg(esc(q), 'me');
+    inp.value = ''; addMsg(esc(q), 'me'); showMsgs(true);
     setTimeout(() => answer(q), 250);
   };
   window.assistantOpen = function (id) { try { switchView('market'); openDetail(id); } catch {} };
   window.assistantRadar = function (k) { try { openRadar(); $a('radarKey').value = k; } catch {} };
 
-  function reply(html, spoken) { addMsg(html, 'bot'); if (spoken && voiceOn) speak(spoken); }
+  function reply(html, spoken) { addMsg(html, 'bot'); showMsgs(true); if (spoken && voiceOn) speak(spoken); }
 
   function answer(q) {
     const n = norm(q);
@@ -3278,6 +3278,11 @@ loadData();
     try { $a('searchQuery').value = tokens.join(' '); } catch {}
   }
 
+  try {
+    const pn = document.getElementById('aiPanel'), dk = document.getElementById('soundDock');
+    const fit = () => { if (pn && dk) dk.style.bottom = (pn.offsetHeight + 8) + 'px'; };
+    new ResizeObserver(fit).observe(pn); fit();
+  } catch {}
   paint();
 })();
 </script>
