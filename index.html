@@ -1039,6 +1039,14 @@ button:disabled { opacity: 0.6; cursor: wait; }
         <input class="form-control" name="city" required placeholder="Ex: Le Havre">
       </div>
     </div>
+    <div class="form-group">
+      <label>Téléphone (facultatif)</label>
+      <input class="form-control" type="tel" name="phone" autocomplete="tel" placeholder="Ex: 06 12 34 56 78">
+      <label style="display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--muted); font-weight:400; margin-top:6px;">
+        <input type="checkbox" name="sharePhone" style="margin-top:2px;">
+        <span>J'accepte que mon numéro soit communiqué <strong>uniquement</strong> au membre avec qui j'ai un échange accepté, pour qu'on puisse s'appeler. Il n'est jamais public.</span>
+      </label>
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label>Mot de passe (8 caractères min.)</label>
@@ -1299,6 +1307,37 @@ function mapOffer(row) {
 }
 
 let reviewRows = [];
+let phoneRows = [];
+function normPhone(v) {
+  let t = String(v || '').replace(/[\s.\-()]/g, '');
+  if (/^0[1-9]\d{8}$/.test(t)) t = '+33' + t.slice(1);
+  if (/^00\d+$/.test(t)) t = '+' + t.slice(2);
+  return /^\+?\d{9,15}$/.test(t) ? t : null;
+}
+function showPhone(p) {
+  const m = /^\+33(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(p);
+  return m ? `0${m[1]} ${m[2]} ${m[3]} ${m[4]} ${m[5]}` : p;
+}
+async function savePhone(raw, share) {
+  const phone = normPhone(raw);
+  if (!phone) throw new Error('Numéro invalide. Exemple : 06 12 34 56 78');
+  await db('member_phones?on_conflict=user_id', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { user_id: currentUser.id, phone: phone, share: Boolean(share), updated_at: new Date().toISOString() } });
+}
+async function submitPhone(e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    if (!String(fd.get('phone')).trim()) {
+      await db('member_phones?user_id=eq.' + encodeURIComponent(currentUser.id), { method: 'DELETE' });
+      notify('Numéro supprimé.');
+    } else {
+      await savePhone(fd.get('phone'), fd.get('share'));
+      notify(fd.get('share') ? 'Numéro enregistré : il sera communiqué à vos échanges acceptés.' : 'Numéro enregistré, non partagé.');
+    }
+    await loadData();
+    openAccount();
+  } catch (err) { notify(err.message); }
+}
 function repOf(userId) {
   const r = reviewRows.filter(x => x.target_id === userId);
   if (!r.length) return null;
@@ -1322,15 +1361,17 @@ async function rateOffer(offerId, targetId, stars) {
 
 async function loadData() {
   try {
-    const [p, l, v, po, o, rv] = await Promise.all([
+    const [p, l, v, po, o, rv, ph] = await Promise.all([
       db('profiles?select=id,name,city,created_at'),
       db('listings?select=*&order=created_at.desc'),
       db('votes?select=target_id,user_id,fair'),
       db('polls?select=*&order=created_at.desc'),
       currentUser ? db('offers?select=*&order=created_at.desc') : Promise.resolve([]),
-      db('reviews?select=offer_id,reviewer_id,target_id,stars').catch(() => [])
+      db('reviews?select=offer_id,reviewer_id,target_id,stars').catch(() => []),
+      currentUser ? db('member_phones?select=user_id,phone,share').catch(() => []) : Promise.resolve([])
     ]);
     reviewRows = rv || [];
+    phoneRows = ph || [];
     profiles = {};
     p.forEach(x => { profiles[x.id] = x; });
     listings = l.map(mapListing);
@@ -1410,6 +1451,7 @@ async function submitSignup(e) {
   if (pw !== String(fd.get('password2'))) return authFail('Les deux mots de passe ne correspondent pas.');
   const dom = String(fd.get('email')).trim().toLowerCase().split('@')[1] || '';
   if (/^(mailinator|yopmail|guerrillamail|sharklasers|10minutemail|tempmail|temp-mail|trashmail|getnada|throwawaymail|maildrop|dispostable|fakeinbox|mohmal|emailondeck|mintemail|tempail|discard|spamgourmet|mailnesia|tempr|moakt|mailcatch|burnermail|inboxkitten)\./.test(dom) || dom === 'mail.tm') return authFail('Les adresses e-mail jetables ne sont pas acceptées. Utilisez votre vraie adresse.');
+  if (String(fd.get('phone') || '').trim() && !normPhone(fd.get('phone'))) return authFail('Numéro de téléphone invalide. Exemple : 06 12 34 56 78');
   authFail('');
   await withBusy(form, 'Création du compte...', async () => {
     try {
@@ -1421,8 +1463,13 @@ async function submitSignup(e) {
       if (!data.access_token) {
         return authFail('Compte créé. Confirmez votre adresse via le lien reçu par e-mail, puis connectez-vous.');
       }
+      const rawPhone = String(fd.get('phone') || '').trim();
+      const shareP = fd.get('sharePhone');
       form.reset();
       await finishAuth(data, `Bienvenue ${(data.user.user_metadata || {}).name || ''} ! Votre compte est créé.`);
+      if (rawPhone) {
+        try { await savePhone(rawPhone, shareP); await loadData(); notify(shareP ? 'Numéro enregistré : partagé uniquement avec vos échanges acceptés.' : 'Numéro enregistré, non partagé.'); } catch {}
+      }
     } catch (err) {
       authFail(err.message);
     }
@@ -1504,6 +1551,18 @@ function openAccount() {
       <div class="trust-bar"><span style="width:${score}%"></span></div>
       <div style="font-size:12px; color:var(--muted);">Il progresse avec vos annonces, vos propositions et vos échanges conclus.</div>
     </div>
+    ${(() => {
+      const mine = phoneRows.find(x => x.user_id === u.id);
+      return `<form onsubmit="submitPhone(event)" style="margin-bottom:18px; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2);">
+        <div style="font-size:13px; font-weight:700; margin-bottom:6px;">📞 Mon téléphone</div>
+        <input class="form-control" type="tel" name="phone" value="${esc(mine ? showPhone(mine.phone) : '')}" placeholder="Ex: 06 12 34 56 78" autocomplete="tel">
+        <label style="display:flex; gap:8px; align-items:flex-start; font-size:12px; color:var(--muted); margin:8px 0;">
+          <input type="checkbox" name="share" ${mine && mine.share ? 'checked' : ''} style="margin-top:2px;">
+          <span>Communiquer mon numéro <strong>uniquement</strong> au membre avec qui j'ai un échange accepté. Jamais public.</span>
+        </label>
+        <button class="btn btn-outline" type="submit" style="width:100%; padding:8px; font-size:13px;">Enregistrer</button>
+      </form>`;
+    })()}
     <div style="display:flex; gap:10px;">
       <button class="btn btn-outline" style="flex:1;" onclick="$('accountModal').close(); switchView('panier')">Mon inventaire</button>
       <button class="btn btn-outline" style="flex:1;" onclick="logout()">Se déconnecter</button>
@@ -2064,6 +2123,13 @@ function renderInbox() {
           <span class="status-pill ${cls}">${esc(o.status)}</span>
         </div>
         <p style="font-size:13px; color:var(--ink);">${esc(o.message)}</p>
+        ${o.status === 'Acceptée' ? (() => {
+          const otherId = received ? o.senderId : o.ownerId;
+          const ph = phoneRows.find(x => x.user_id === otherId && x.user_id !== currentUser.id);
+          return ph
+            ? `<div class="hint" style="margin:10px 0 0;">📞 ${esc(received ? o.sender : 'Le membre')} accepte d'être appelé : <a href="tel:${esc(ph.phone)}" style="font-weight:700;">${esc(showPhone(ph.phone))}</a></div>`
+            : `<div class="hint" style="margin:10px 0 0; color:var(--muted);">📞 Pas de numéro partagé : utilisez la messagerie.</div>`;
+        })() : ''}
         ${o.code ? `<div class="hint" style="margin:10px 0 0;">Code de remise TrocPass : <strong>${esc(o.code)}</strong> — à échanger lors de la remise en main propre.</div>` : ''}
         ${o.status === 'Acceptée' ? (() => {
           const target = received ? o.senderId : o.ownerId;
