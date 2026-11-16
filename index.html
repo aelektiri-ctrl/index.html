@@ -654,7 +654,7 @@ body{padding-bottom:58px;}
       </div>
       <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
         <button class="btn btn-primary" onclick="openPostModal()">+ Déposer mon premier objet</button>
-        <span style="font-size:13px; color:var(--muted);">Gratuit. Les 100 premiers membres ont 10 photos par annonce.</span>
+        <span style="font-size:13px; color:var(--muted);">Gratuit. Les 10 premiers membres ont 10 photos par annonce.</span>
       </div>
     </section>
 
@@ -1452,7 +1452,7 @@ async function rateOffer(offerId, targetId, stars) {
 async function loadData() {
   try {
     const [p, l, v, po, o, rv, ph] = await Promise.all([
-      db('profiles?select=id,name,city,created_at,last_seen,invited_by'),
+      db('profiles?select=id,name,city,created_at,last_seen,invited_by,vip'),
       db('listings?select=*&order=created_at.desc'),
       db('votes?select=target_id,user_id,fair'),
       db('polls?select=*&order=created_at.desc'),
@@ -1489,6 +1489,13 @@ function renderFounderBanner() {
   if (isFounder()) el.innerHTML = `🏅 <strong>Vous êtes membre fondateur</strong> : ${FOUNDER_PHOTOS} photos gratuites par annonce, pour toujours. Merci de lancer l'aventure !`;
   else if (left > 0) el.innerHTML = `🎁 <strong>Offre de lancement</strong> : les ${FOUNDER_LIMIT} premiers membres ont ${FOUNDER_PHOTOS} photos gratuites par annonce au lieu de ${FREE_PHOTOS}. <strong>Plus que ${left} place${left > 1 ? 's' : ''}.</strong>`;
   else el.style.display = 'none';
+  if (currentUser && !isFounder()) el.innerHTML += ` <a href="#" onclick="redeemVip(); return false;" style="color:inherit; text-decoration:underline; white-space:nowrap;">🎟️ J'ai un code VIP</a>`;
+}
+async function redeemVip() {
+  const c = prompt('Entre ton code VIP :');
+  if (!c) return;
+  try { await db('rpc/redeem_vip', { method: 'POST', body: { p_code: c.trim() } }); notify('🎉 Accès VIP activé : aucun frais pour toi, 10 photos par annonce !'); await loadData(); }
+  catch (x) { notify(x.message || 'Code invalide.'); }
 }
 
 function voteStats(id) {
@@ -1632,7 +1639,7 @@ function levelOf(points) {
 function badgesFor(userId, st) {
   const isF = Object.values(profiles).sort((a, b) => a.created_at < b.created_at ? -1 : 1).slice(0, FOUNDER_LIMIT).some(x => x.id === userId);
   return [
-    ['🏅', 'Fondateur', isF, 'Parmi les 100 premiers membres'],
+    ['🏅', 'Fondateur', isF, 'Parmi les 10 premiers membres'],
     ['🌱', 'Premier échange', st.done >= 1, '1 échange accepté'],
     ['🔁', 'Troqueur confirmé', st.done >= 3, '3 échanges acceptés'],
     ['📦', 'Vendeur actif', st.mine >= 5, '5 annonces publiées'],
@@ -2147,11 +2154,12 @@ const PHOTO_PACKS = [
 ];
 const BOOST_PRICE = 0.99;
 const BOOST_WEEK_PRICE = 2.99;
-const TROC_FEE = 1.99; // frais de validation d'un échange (offerts aux 100 fondateurs)
-const FOUNDER_LIMIT = 100, FOUNDER_PHOTOS = 10;
+const TROC_FEE = 1.99; // frais de validation d'un échange (offerts aux 10 fondateurs)
+const FOUNDER_LIMIT = 10, FOUNDER_PHOTOS = 10;
 const founderCount = () => Math.min(FOUNDER_LIMIT, Object.keys(profiles).length);
 const isFounder = () => {
   if (!currentUser) return false;
+  if ((profiles[currentUser.id] || {}).vip) return true;
   const ids = Object.values(profiles).sort((a, b) => a.created_at < b.created_at ? -1 : 1).slice(0, FOUNDER_LIMIT).map(x => x.id);
   return ids.includes(currentUser.id);
 };
@@ -2537,9 +2545,19 @@ async function decideOffer(id, accept) {
     const isDon = Boolean(targetListing && targetListing.mode === 'DON');
     if (accept && !isDon) {
       const founder = isFounder();
+      let ref = false;
+      if (!founder) {
+        try {
+          const invited = Object.values(profiles).filter(x => x.invited_by === currentUser.id).length;
+          const used = (await db('payments?select=id&user_id=eq.' + encodeURIComponent(currentUser.id) + '&status=eq.' + encodeURIComponent('Offert (parrainage)'))).length;
+          ref = invited - used > 0;
+        } catch {}
+      }
+      const free = founder || ref;
       try {
-        await db('payments', { method: 'POST', body: { type: 'Frais de validation troc', amount: founder ? 0 : TROC_FEE, status: founder ? 'Offert (fondateur)' : 'À encaisser' } });
+        await db('payments', { method: 'POST', body: { type: 'Frais de validation troc', amount: free ? 0 : TROC_FEE, status: founder ? 'Offert (fondateur)' : ref ? 'Offert (parrainage)' : 'À encaisser' } });
       } catch {}
+      if (ref) notify('Frais offerts grâce à ton parrainage 🎁');
     }
     notify(accept ? 'Proposition acceptée. Code de remise TrocPass généré.' + (isDon ? ' Don : aucun frais.' : isFounder() ? ' Frais de validation offerts (membre fondateur 🏅).' : ' Frais de validation : ' + fmtEuro(TROC_FEE) + '.') : 'Proposition refusée.');
     await loadData();
@@ -2930,7 +2948,7 @@ function renderAdmin() {
     ${adminSection('Signalements', 'signalements', i => `<button class="btn btn-outline btn-sm" onclick="adminDismissReport('${esc(a.reports[i].id)}')">Classer</button>`)}
     <div class="adm-card">
       <div class="adm-head"><h3>Tarifs en vigueur</h3></div>
-      ${adminTable(['Option', 'Prix'], [['Photos (jusqu\'à ' + FREE_PHOTOS + ')', 'Gratuit']].concat(PHOTO_PACKS.map(p => [p.label, fmtEuro(p.price)]), [['Boost 48 h', fmtEuro(BOOST_PRICE)], ['Boost 7 jours', fmtEuro(BOOST_WEEK_PRICE)], ['Frais de validation d\'un échange (gratuit pour les 100 fondateurs)', fmtEuro(TROC_FEE)]]))}
+      ${adminTable(['Option', 'Prix'], [['Photos (jusqu\'à ' + FREE_PHOTOS + ')', 'Gratuit']].concat(PHOTO_PACKS.map(p => [p.label, fmtEuro(p.price)]), [['Boost 48 h', fmtEuro(BOOST_PRICE)], ['Boost 7 jours', fmtEuro(BOOST_WEEK_PRICE)], ['Frais de validation d\'un échange (gratuit pour les 10 fondateurs)', fmtEuro(TROC_FEE)]]))}
     </div>
     <div class="adm-card">
       <div class="adm-head"><h3>Demandes de sponsors (${(a.sponsors || []).length})</h3></div>
@@ -3059,7 +3077,7 @@ function setupInstall() {
   }
 }
 
-const APP_VERSION='2026-11-16-5';
+const APP_VERSION='2026-11-16-6';
 (function(){
   async function checkVersion(){
     try{
@@ -3193,7 +3211,7 @@ loadData();
   // Nouveau membre : prénom + 2-3 infos du projet
   window.welcomeSpeak = function (nameIn) {
     const n = firstName(nameIn) || curName();
-    const t = 'Bienvenue ' + (n ? n + ' ' : '') + 'sur À Vos Trocs ! Ici, on échange ses objets sans dépenser un euro, ou avec une petite soulte. Les échanges se font entre membres inscrits, avec des avis et une protection contre les faux comptes. Et les cent premiers membres ont dix photos par annonce, gratuitement. Bonne visite !';
+    const t = 'Bienvenue ' + (n ? n + ' ' : '') + 'sur À Vos Trocs ! Ici, on échange ses objets sans dépenser un euro, ou avec une petite soulte. Les échanges se font entre membres inscrits, avec des avis et une protection contre les faux comptes. Et les dix premiers membres ont dix photos par annonce, gratuitement. Bonne visite !';
     welcomed = true;
     if (voiceOn) speak(t);
     openAssistant('Bienvenue ' + (n ? n + ' ' : '') + 'sur À Vos Trocs ! 🎉 Dis-moi ce que tu cherches ou ce que tu veux échanger, je t\'aide.');
@@ -3394,7 +3412,7 @@ loadData();
     if (/(comment|explique|marche|fonctionne|c est quoi|principe)/.test(n) && /(marche|fonctionne|troc|appli|site|principe|quoi)/.test(n))
       return reply('<b>Comment ça marche ?</b><br>1. Tu publies un objet que tu n\'utilises plus.<br>2. Tu proposes un échange (troc pur) ou une vente avec soulte.<br>3. L\'autre accepte, vous vous mettez d\'accord et vous échangez en main propre. Le tout entre membres inscrits, avec des avis et une protection contre les faux comptes.', 'C\'est simple. Tu publies un objet, tu proposes un échange, et si l\'autre accepte, vous vous retrouvez pour échanger en main propre.');
     if (/(frais|commission|combien ca coute|tarif|payant|gratuit.*inscription|prix de l)/.test(n) && !/(velo|console)/.test(n))
-      return reply('Publier et échanger, c\'est <b>gratuit</b>. Les 100 premiers membres ont 10 photos par annonce. Une petite participation de 1,99 € s\'applique pour valider un troc (gratuite pour les membres fondateurs).', 'Publier est gratuit. Une petite participation de un euro quatre-vingt-dix-neuf valide un troc, et c\'est gratuit pour les membres fondateurs.');
+      return reply('Publier et échanger, c\'est <b>gratuit</b>. Les 10 premiers membres ont 10 photos par annonce. Une petite participation de 1,99 € s\'applique pour valider un troc (gratuite pour les membres fondateurs).', 'Publier est gratuit. Une petite participation de un euro quatre-vingt-dix-neuf valide un troc, et c\'est gratuit pour les membres fondateurs.');
     if (/(publier|deposer|poster|vendre|mettre en vente|creer une annonce|ajouter)/.test(n)) {
       reply('Super ! Je t\'ouvre le formulaire d\'annonce. 📸 Pense à ajouter de belles photos.', 'Super ! Je t\'ouvre le formulaire d\'annonce.');
       try { openPostModal(); } catch {} return;
