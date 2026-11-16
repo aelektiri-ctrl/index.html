@@ -2898,7 +2898,7 @@ function setupInstall() {
   }
 }
 
-const APP_VERSION='2026-11-16-2';
+const APP_VERSION='2026-11-16-3';
 (function(){
   async function checkVersion(){
     try{
@@ -2930,19 +2930,30 @@ loadData();
 </script>
 
 <!-- Ambiance : voix de bienvenue et musique douce (facultatives) -->
+<div id="aiPanel" style="display:none; position:fixed; left:10px; right:10px; bottom:62px; max-width:420px; max-height:62vh; z-index:60; flex-direction:column; background:var(--surface,#161b1a); color:var(--ink,#fff); border:1px solid var(--border,#333); border-radius:18px; box-shadow:0 12px 40px rgba(0,0,0,.5); overflow:hidden;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; font-weight:700; border-bottom:1px solid var(--border,#333);"><span>🤖 Assistant À Vos Trocs</span><button type="button" onclick="toggleAssistant()" aria-label="Fermer" style="border:0; background:transparent; color:inherit; font-size:20px; cursor:pointer;">×</button></div>
+  <div id="aiMsgs" style="flex:1; overflow-y:auto; padding:8px 12px; min-height:120px;"></div>
+  <form onsubmit="assistantSend(); return false;" style="display:flex; gap:6px; padding:8px; border-top:1px solid var(--border,#333);">
+    <button type="button" id="aiMic" onclick="assistantListen()" aria-label="Parler" style="width:40px; border-radius:50%; border:0; background:var(--surface-2,#222); color:inherit; font-size:17px; cursor:pointer;">🎤</button>
+    <input id="aiInput" autocomplete="off" placeholder="Ex : vélo au Havre moins de 200 €" style="flex:1; min-width:0; border-radius:999px; border:1px solid var(--border,#333); background:var(--surface-2,#222); color:inherit; padding:10px 14px; font-size:16px;">
+    <button type="submit" style="border:0; border-radius:999px; background:#f7d47c; color:#15120a; font-weight:700; padding:0 14px; cursor:pointer;">OK</button>
+  </form>
+</div>
 <div id="soundDock" style="position:fixed; left:12px; bottom:12px; z-index:50; display:flex; gap:8px;">
   <button id="musicBtn" type="button" onclick="toggleMusic()" aria-pressed="false" title="Musique d'ambiance" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🎵 Musique</button>
   <button id="voiceBtn" type="button" onclick="toggleVoice()" aria-pressed="true" title="Voix de bienvenue" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🔊 Voix</button>
+  <button id="aiBtn" type="button" onclick="toggleAssistant()" title="Assistant" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🤖 Assistant</button>
 </div>
 <script>
-/* ===== Voix de bienvenue + musique d'ambiance (générée dans le navigateur, sans fichier ni droit d'auteur) ===== */
+/* ===== Voix, musique d'ambiance et assistant (tout est généré dans le navigateur, gratuit, sans droit d'auteur) ===== */
 (function () {
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch {} }
   };
   let voiceOn = store.get('avt_voice', '1') === '1';
-  let musicOn = false, ctx = null, master = null, timer = null, step = 0;
+  let musicOn = false, ctx = null, master = null, fxIn = null, noiseBuf = null, timer = null;
+  let nextT = 0, stp = 0;
 
   function paint() {
     const m = document.getElementById('musicBtn'), v = document.getElementById('voiceBtn');
@@ -2950,66 +2961,185 @@ loadData();
     if (v) { v.textContent = voiceOn ? '🔊 Voix' : '🔇 Voix'; v.setAttribute('aria-pressed', String(voiceOn)); }
   }
 
+  /* ---------- Voix : on choisit la voix française la plus naturelle disponible ---------- */
+  function bestVoice() {
+    let vs = [];
+    try { vs = speechSynthesis.getVoices().filter(x => /^fr/i.test(x.lang)); } catch {}
+    if (!vs.length) return null;
+    const score = v => {
+      const n = (v.name || '') + ' ' + (v.voiceURI || '');
+      let s = 0;
+      if (/neural|natural|premium|enhanced|online|wavenet|studio/i.test(n)) s += 6;
+      if (/google/i.test(n)) s += 4;
+      if (/amelie|amélie|audrey|céline|celine|denise|vivienne|brigitte|marie|julie|hortense|lea|léa|female|femme/i.test(n)) s += 3;
+      if (/fr[-_]FR/i.test(v.lang)) s += 2;
+      if (/compact|espeak|robot/i.test(n)) s -= 5;
+      if (v.localService === false) s += 1;
+      return s;
+    };
+    return vs.sort((a, b) => score(b) - score(a))[0];
+  }
+  try { speechSynthesis.onvoiceschanged = () => {}; speechSynthesis.getVoices(); } catch {}
+
   function speak(text) {
     try {
       if (!('speechSynthesis' in window)) return;
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'fr-FR'; u.rate = 0.95; u.pitch = 1; u.volume = 0.9;
-      const fr = speechSynthesis.getVoices().find(x => /^fr/i.test(x.lang));
-      if (fr) u.voice = fr;
-      speechSynthesis.speak(u);
+      // on découpe en phrases : le rythme est plus vivant et la voix reste fluide
+      const parts = String(text).match(/[^.!?]+[.!?]*/g) || [text];
+      const v = bestVoice();
+      parts.forEach((p, i) => {
+        const u = new SpeechSynthesisUtterance(p.trim());
+        u.lang = 'fr-FR'; u.rate = 1.04; u.pitch = /!/.test(p) ? 1.14 : 1.06; u.volume = 1;
+        if (v) u.voice = v;
+        speechSynthesis.speak(u);
+      });
     } catch {}
   }
+  window.avtSpeak = function (t) { if (voiceOn) speak(t); };
 
-  // Voix de bienvenue : une seule fois par visite, au premier toucher (les navigateurs interdisent le son avant)
-  let welcomed = false;
+  function firstName(n) {
+    n = String(n || '').trim();
+    if (!n || n === 'Membre') return '';
+    return n.split(/[\s.\-_0-9]+/)[0];
+  }
+  function curName() { return (typeof currentUser !== 'undefined' && currentUser) ? firstName(currentUser.name) : ''; }
+
+  /* ---------- Bienvenue : à chaque ouverture (et au retour après une longue absence) ---------- */
+  let welcomed = false, leftAt = 0;
+  function dayPart() { const h = new Date().getHours(); return h < 5 || h >= 18 ? 'Bonsoir' : 'Bonjour'; }
+  function greet() {
+    const n = curName();
+    const hi = dayPart() + (n ? ' ' + n : '') + ' !';
+    const txt = n
+      ? hi + ' Ravi de te retrouver sur À Vos Trocs ! Qu\'est-ce que je peux faire pour toi aujourd\'hui ? Dis-moi ce que tu cherches, et je m\'en occupe !'
+      : hi + ' Bienvenue sur À Vos Trocs ! Qu\'est-ce que je peux faire pour toi aujourd\'hui ? Dis-moi ce que tu cherches, objet, ville, budget, et je te trouve ça !';
+    if (voiceOn) speak(txt);
+    openAssistant(txt);
+  }
   function welcome() {
     if (welcomed) return;
     welcomed = true;
     removeEventListener('pointerdown', welcome, true);
-    if (!voiceOn) return;
-    let seen = '0';
-    try { seen = sessionStorage.getItem('avt_welcomed') || '0'; sessionStorage.setItem('avt_welcomed', '1'); } catch {}
-    if (seen === '1') return;
-    window.welcomeSpeak();
+    greet();
   }
-  window.welcomeSpeak = function (nameIn) {
-    if (!voiceOn) return;
-    let n = nameIn || ((typeof currentUser !== 'undefined' && currentUser && currentUser.name !== 'Membre') ? currentUser.name : '');
-    n = String(n || '').trim().split(/[\s.]+/)[0];
-    const hello = n ? 'Bienvenue ' + n + ' sur À Vos Trocs !' : 'Bienvenue sur À Vos Trocs !';
-    try { sessionStorage.setItem('avt_welcomed', '1'); } catch {}
-    speak(hello + ' Ici, on échange ses objets sans dépenser un euro, ou avec une petite soulte. Les échanges se font entre membres inscrits, avec des avis et une protection contre les faux comptes. Et les cent premiers membres ont dix photos par annonce, gratuitement. Bonne visite !');
-  };
   addEventListener('pointerdown', welcome, true);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { leftAt = Date.now(); try { speechSynthesis.cancel(); } catch {} return; }
+    if (leftAt && Date.now() - leftAt > 20 * 60 * 1000) { leftAt = 0; welcomed = false; addEventListener('pointerdown', welcome, true); }
+  });
+
+  // Nouveau membre : prénom + 2-3 infos du projet
+  window.welcomeSpeak = function (nameIn) {
+    const n = firstName(nameIn) || curName();
+    const t = 'Bienvenue ' + (n ? n + ' ' : '') + 'sur À Vos Trocs ! Ici, on échange ses objets sans dépenser un euro, ou avec une petite soulte. Les échanges se font entre membres inscrits, avec des avis et une protection contre les faux comptes. Et les cent premiers membres ont dix photos par annonce, gratuitement. Bonne visite !';
+    welcomed = true;
+    if (voiceOn) speak(t);
+    openAssistant('Bienvenue ' + (n ? n + ' ' : '') + 'sur À Vos Trocs ! 🎉 Dis-moi ce que tu cherches ou ce que tu veux échanger, je t\'aide.');
+  };
 
   window.toggleVoice = function () {
     voiceOn = !voiceOn; store.set('avt_voice', voiceOn ? '1' : '0');
-    if (!voiceOn) { try { speechSynthesis.cancel(); } catch {} } else { speak('Voix activée.'); }
+    if (!voiceOn) { try { speechSynthesis.cancel(); } catch {} } else { speak('Voix activée !'); }
     paint();
   };
 
-  // Musique : accords doux (pad) + petites notes d'arpège, volume faible
-  const CHORDS = [[261.63, 329.63, 392.0, 493.88], [220.0, 261.63, 329.63, 392.0], [174.61, 220.0, 261.63, 329.63], [196.0, 246.94, 293.66, 392.0]];
-  const SCALE = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+  /* ---------- Musique : lounge chaleureux, piano électrique + basse + petite mélodie qui reste en tête ---------- */
+  const BPM = 92, STEP = 60 / BPM / 4;                 // 16 pas par mesure
+  const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+  // Am – F – C – G, boucle de 4 mesures
+  const CH = [[57, 60, 64, 67], [53, 57, 60, 64], [60, 64, 67, 71], [55, 59, 62, 66]];
+  const BASS = [45, 41, 48, 43];
+  // Mélodie (pas dans la mesure : note MIDI)
+  const MEL_A = [
+    { 0: 76, 3: 79, 6: 76, 8: 72, 10: 74, 12: 76 },
+    { 0: 77, 4: 76, 6: 72, 8: 69, 12: 72, 14: 74 },
+    { 0: 79, 3: 76, 6: 84, 10: 79, 12: 76 },
+    { 0: 74, 4: 71, 8: 74, 10: 79, 12: 78, 14: 74 }
+  ];
+  const MEL_B = [
+    { 2: 79, 4: 81, 6: 79, 8: 76, 12: 72, 14: 76 },
+    { 0: 81, 3: 79, 6: 77, 8: 76, 10: 72, 14: 69 },
+    { 0: 84, 4: 79, 6: 76, 8: 79, 10: 83, 12: 84 },
+    { 0: 83, 4: 79, 6: 74, 8: 71, 12: 74, 14: 78 }
+  ];
 
-  function tone(freq, t0, dur, gain, type) {
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = type; o.frequency.value = freq;
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.linearRampToValueAtTime(gain, t0 + dur * 0.35);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g); g.connect(master);
-    o.start(t0); o.stop(t0 + dur + 0.05);
+  function buildFx() {
+    const sr = ctx.sampleRate, len = Math.floor(sr * 2.4);
+    const ir = ctx.createBuffer(2, len, sr);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+    const conv = ctx.createConvolver(); conv.buffer = ir;
+    const wet = ctx.createGain(); wet.gain.value = 0.32;
+    const delay = ctx.createDelay(1); delay.delayTime.value = STEP * 6;
+    const fb = ctx.createGain(); fb.gain.value = 0.28;
+    const dl = ctx.createBiquadFilter(); dl.type = 'lowpass'; dl.frequency.value = 2400;
+    fxIn = ctx.createGain();
+    fxIn.connect(conv); conv.connect(wet); wet.connect(master);
+    fxIn.connect(delay); delay.connect(dl); dl.connect(fb); fb.connect(delay); dl.connect(wet);
+    const nb = ctx.createBuffer(1, sr, sr), nd = nb.getChannelData(0);
+    for (let i = 0; i < sr; i++) nd[i] = Math.random() * 2 - 1;
+    noiseBuf = nb;
   }
 
-  function schedule() {
+  function env(g, t, a, d, peak) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(peak, t + a);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+  }
+  function epiano(m, t, dur, vel) {   // piano électrique doux
+    const f = mf(m), g = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
+    o1.type = 'sine'; o1.frequency.value = f;
+    o2.type = 'sine'; o2.frequency.value = f * 2.005; g2.gain.value = 0.35;
+    env(g, t, 0.008, dur, vel);
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    g.connect(master); g.connect(fxIn);
+    o1.start(t); o2.start(t); o1.stop(t + dur + 0.1); o2.stop(t + dur + 0.1);
+  }
+  function pluck(m, t, dur, vel) {    // mélodie : sonorité de vibraphone / marimba
+    const f = mf(m), g = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
+    o1.type = 'sine'; o1.frequency.value = f;
+    o2.type = 'sine'; o2.frequency.value = f * 4; g2.gain.setValueAtTime(0.18, t); g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+    env(g, t, 0.005, dur, vel);
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    g.connect(master); g.connect(fxIn);
+    o1.start(t); o2.start(t); o1.stop(t + dur + 0.1); o2.stop(t + dur + 0.1);
+  }
+  function bass(m, t, dur, vel) {
+    const g = ctx.createGain(), o = ctx.createOscillator(), lp = ctx.createBiquadFilter();
+    o.type = 'triangle'; o.frequency.value = mf(m); lp.type = 'lowpass'; lp.frequency.value = 520;
+    env(g, t, 0.01, dur, vel);
+    o.connect(lp); lp.connect(g); g.connect(master);
+    o.start(t); o.stop(t + dur + 0.1);
+  }
+  function kick(t, vel) {
+    const g = ctx.createGain(), o = ctx.createOscillator();
+    o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+    env(g, t, 0.003, 0.22, vel);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.3);
+  }
+  function shaker(t, vel) {
+    const s = ctx.createBufferSource(), g = ctx.createGain(), hp = ctx.createBiquadFilter();
+    s.buffer = noiseBuf; hp.type = 'highpass'; hp.frequency.value = 6500;
+    env(g, t, 0.002, 0.05, vel);
+    s.connect(hp); hp.connect(g); g.connect(master); s.start(t, Math.random() * 0.5, 0.1);
+  }
+
+  function playStep(i, t) {
+    const bar = Math.floor(i / 16) % 4, s = i % 16, loop = Math.floor(i / 64);
+    const chord = CH[bar];
+    if (s === 0) { chord.forEach((m, k) => epiano(m, t + k * 0.012, STEP * 9, 0.05)); bass(BASS[bar], t, STEP * 5, 0.2); kick(t, 0.22); }
+    if (s === 6) bass(BASS[bar], t, STEP * 3, 0.14);
+    if (s === 8) kick(t, 0.12);
+    if (s === 10) { chord.slice(1).forEach(m => epiano(m, t, STEP * 3, 0.03)); bass(BASS[bar] + 12, t, STEP * 2, 0.1); }
+    if (s % 2 === 0) shaker(t + (s % 4 === 2 ? 0.01 : 0), s % 4 === 2 ? 0.05 : 0.025);
+    if (loop >= 1) {      // à partir du 2e tour, la mélodie arrive
+      const mel = (loop % 2 === 1 ? MEL_A : MEL_B)[bar];
+      if (mel[s] !== undefined && Math.random() < 0.93) pluck(mel[s], t + (Math.random() * 0.012), STEP * 4, 0.075);
+    }
+  }
+  function sched() {
     if (!ctx || !musicOn) return;
-    const t = ctx.currentTime + 0.05;
-    if (step % 4 === 0) CHORDS[(step / 4) % CHORDS.length].forEach(f => tone(f / 2, t, 7, 0.05, 'sine'));
-    tone(SCALE[Math.floor(Math.random() * SCALE.length)], t + 0.2, 2.4, 0.03, 'triangle');
-    step++;
+    while (nextT < ctx.currentTime + 0.6) { playStep(stp, nextT); nextT += STEP; stp++; }
   }
 
   function startMusic() {
@@ -3017,26 +3147,136 @@ loadData();
     if (!AC) return false;
     if (!ctx) {
       ctx = new AC();
-      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800;
-      master = ctx.createGain(); master.gain.value = 0.5;
-      master.connect(lp); lp.connect(ctx.destination);
+      master = ctx.createGain(); master.gain.value = 0.9;
+      const comp = ctx.createDynamicsCompressor();
+      master.connect(comp); comp.connect(ctx.destination);
+      buildFx();
     }
     if (ctx.state === 'suspended') ctx.resume();
-    step = 0; schedule();
-    timer = setInterval(schedule, 1750);
+    stp = 0; nextT = ctx.currentTime + 0.1;
+    sched(); timer = setInterval(sched, 150);
     return true;
   }
-
   window.toggleMusic = function () {
     if (!musicOn) { musicOn = startMusic(); }
     else { musicOn = false; clearInterval(timer); if (ctx) ctx.suspend(); }
     paint();
   };
-
   document.addEventListener('visibilitychange', () => {
     if (!ctx || !musicOn) return;
-    if (document.hidden) ctx.suspend(); else ctx.resume();
+    if (document.hidden) ctx.suspend(); else { ctx.resume(); nextT = ctx.currentTime + 0.1; }
   });
+
+  /* ---------- Assistant : cherche dans les annonces, répond aux questions ---------- */
+  const $a = id => document.getElementById(id);
+  const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9€ ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const STOP = new Set('je tu il on nous vous de du des le la les un une et ou a au aux en dans pour sur avec sans que qui quoi est suis cherche chercher recherche voudrais veux voulais aimerais besoin trouver trouve moi toi mon ma mes ton ta tes pres autour environ svp stp bonjour salut hello coucher y ya il yen ce cet cette ca ici avoir etre fait faire peux peut pas plus moins max maximum budget euros euro eur prix annonce annonces objet objets quelque chose truc des'.split(' '));
+  const CATMAP = {
+    'High-Tech & Téléphonie': 'telephone portable iphone samsung smartphone tablette ipad ordinateur pc macbook tv television ecran casque airpods hightech informatique xiaomi huawei',
+    'Mobilité & Vélos': 'velo vtt trottinette trotinette scooter moto voiture auto segway vae electrique bicyclette gravel',
+    'Maison & Ameublement': 'canape meuble table chaise lit armoire deco decoration lampe frigo lave electromenager cuisine matelas',
+    'Photo, Audio & Gaming': 'console ps5 ps4 ps3 xbox switch nintendo jeu jeux manette appareil photo camera enceinte guitare piano micro gaming reflex canon nikon sony',
+    'Outillage & Bricolage': 'perceuse outil outils visseuse scie tondeuse bricolage meuleuse jardin',
+    'Mode & Horlogerie': 'montre sac chaussures veste robe vetement vetements baskets bijou bijoux manteau'
+  };
+  function catsFor(tokens) {
+    const out = [];
+    Object.keys(CATMAP).forEach(c => { const w = CATMAP[c].split(' '); if (tokens.some(t => w.includes(t))) out.push(c); });
+    return out;
+  }
+  function addMsg(html, who) {
+    const box = $a('aiMsgs'); if (!box) return;
+    const d = document.createElement('div');
+    d.style.cssText = 'margin:6px 0; padding:9px 12px; border-radius:14px; font-size:14px; line-height:1.45; max-width:92%; ' + (who === 'me'
+      ? 'margin-left:auto; background:var(--accent,#f7d47c); color:#15120a;' : 'background:var(--surface-2,#222); color:var(--ink,#fff);');
+    d.innerHTML = html; box.appendChild(d); box.scrollTop = box.scrollHeight; return d;
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function openAssistant(firstMsg) {
+    const p = $a('aiPanel'); if (!p) return;
+    p.style.display = 'flex';
+    if (firstMsg && !p.dataset.greeted) { p.dataset.greeted = '1'; addMsg(esc(firstMsg), 'bot'); }
+    else if (firstMsg) { addMsg(esc(firstMsg), 'bot'); }
+  }
+  window.toggleAssistant = function () {
+    const p = $a('aiPanel'); if (!p) return;
+    if (p.style.display === 'flex') { p.style.display = 'none'; return; }
+    openAssistant(p.dataset.greeted ? '' : 'Salut ! Dis-moi ce que tu cherches : un objet, une ville, un budget. Par exemple « vélo au Havre moins de 200 € ».');
+    $a('aiInput').focus();
+  };
+  window.assistantListen = function () {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { addMsg('Le micro n\'est pas disponible sur ce navigateur, écris-moi ta demande.', 'bot'); return; }
+    const r = new SR(); r.lang = 'fr-FR'; r.interimResults = false;
+    $a('aiMic').textContent = '🔴';
+    r.onresult = e => { $a('aiInput').value = e.results[0][0].transcript; assistantSend(); };
+    r.onerror = () => addMsg('Je n\'ai pas bien entendu, réessaie !', 'bot');
+    r.onend = () => { $a('aiMic').textContent = '🎤'; };
+    try { r.start(); } catch { $a('aiMic').textContent = '🎤'; }
+  };
+  window.assistantSend = function () {
+    const inp = $a('aiInput'); const q = inp.value.trim(); if (!q) return;
+    inp.value = ''; addMsg(esc(q), 'me');
+    setTimeout(() => answer(q), 250);
+  };
+  window.assistantOpen = function (id) { try { switchView('market'); openDetail(id); } catch {} };
+  window.assistantRadar = function (k) { try { openRadar(); $a('radarKey').value = k; } catch {} };
+
+  function reply(html, spoken) { addMsg(html, 'bot'); if (spoken && voiceOn) speak(spoken); }
+
+  function answer(q) {
+    const n = norm(q);
+    const L = (typeof listings !== 'undefined' && Array.isArray(listings)) ? listings : [];
+    // questions fréquentes
+    if (/^(salut|bonjour|hello|coucou|bonsoir|hey)\b/.test(n) && n.split(' ').length <= 3) return reply('Salut ! 😊 Qu\'est-ce que tu cherches aujourd\'hui ?', 'Salut ! Qu\'est-ce que tu cherches aujourd\'hui ?');
+    if (/merci/.test(n)) return reply('Avec plaisir ! 😊 Je suis là si tu as besoin.', 'Avec plaisir !');
+    if (/(comment|explique|marche|fonctionne|c est quoi|principe)/.test(n) && /(marche|fonctionne|troc|appli|site|principe|quoi)/.test(n))
+      return reply('<b>Comment ça marche ?</b><br>1. Tu publies un objet que tu n\'utilises plus.<br>2. Tu proposes un échange (troc pur) ou une vente avec soulte.<br>3. L\'autre accepte, vous vous mettez d\'accord et vous échangez en main propre. Le tout entre membres inscrits, avec des avis et une protection contre les faux comptes.', 'C\'est simple. Tu publies un objet, tu proposes un échange, et si l\'autre accepte, vous vous retrouvez pour échanger en main propre.');
+    if (/(frais|commission|combien ca coute|tarif|payant|gratuit.*inscription|prix de l)/.test(n) && !/(velo|console)/.test(n))
+      return reply('Publier et échanger, c\'est <b>gratuit</b>. Les 100 premiers membres ont 10 photos par annonce. Une petite participation de 1,99 € s\'applique pour valider un troc (gratuite pour les membres fondateurs).', 'Publier est gratuit. Une petite participation de un euro quatre-vingt-dix-neuf valide un troc, et c\'est gratuit pour les membres fondateurs.');
+    if (/(publier|deposer|poster|vendre|mettre en vente|creer une annonce|ajouter)/.test(n)) {
+      reply('Super ! Je t\'ouvre le formulaire d\'annonce. 📸 Pense à ajouter de belles photos.', 'Super ! Je t\'ouvre le formulaire d\'annonce.');
+      try { openPostModal(); } catch {} return;
+    }
+    if (/(alerte|radar|previens|previenne|avertis)/.test(n)) { reply('Je t\'ouvre les alertes : tu seras prévenu dès qu\'un objet correspond. 🔔', 'Je t\'ouvre les alertes.'); try { openRadar(); } catch {} return; }
+
+    // recherche
+    let maxP = null; const mp = n.match(/(?:moins de|max|maximum|jusqu a|sous|budget|pas plus de|<)\s*(\d{1,6})/) || n.match(/(\d{1,6})\s*(?:€|euros?|eur)\s*(?:max|maximum)?/);
+    if (mp) maxP = Number(mp[1]);
+    const free = /\b(gratuit|gratuite|gratuitement|don|donne|donner|offert)\b/.test(n);
+    // ville
+    const cities = [...new Set(L.map(x => norm(x.city)).filter(Boolean))];
+    const city = cities.find(c => c.length > 2 && n.includes(c)) || null;
+    let tokens = n.replace(/\d+/g, ' ').split(' ').filter(t => t.length > 2 && !STOP.has(t) && !/^(euros?|eur|max|moins|sous|gratuit|gratuite|gratuitement|don|dons|donne|donner|offert)$/.test(t));
+    if (city) { const cw = city.split(' '); tokens = tokens.filter(t => !cw.includes(t)); }
+    const cats = catsFor(tokens);
+    if (!tokens.length && !city && maxP === null && !free) return reply('Dis-moi ce que tu cherches : un objet, une ville, un budget. Par exemple « console de jeux à Rouen » ou « un don gratuit ». 😉', 'Dis-moi ce que tu cherches : un objet, une ville, un budget.');
+
+    let res = L.map(x => {
+      const title = norm(x.title), other = norm([x.category, x.description, x.want].join(' '));
+      let s = 0;
+      tokens.forEach(t => { if (title.includes(t)) s += 3; else if (other.includes(t)) s += 1; });
+      if (cats.includes(x.category)) s += 2;
+      return { x, s };
+    });
+    if (tokens.length) res = res.filter(r => r.s > 0);
+    if (city) res = res.filter(r => norm(r.x.city).includes(city));
+    if (free) res = res.filter(r => Number(r.x.price) === 0);
+    if (maxP !== null && !free) res = res.filter(r => Number(r.x.price) <= maxP);
+    res.sort((a, b) => b.s - a.s);
+    const top = res.slice(0, 4);
+    const label = tokens.join(' ') || (free ? 'don' : 'annonces');
+    if (!top.length) {
+      reply('Je n\'ai encore rien trouvé pour ça. 😕 Je peux te <a href="#" onclick="assistantRadar(\'' + esc(label).replace(/'/g, '') + '\'); return false;" style="color:inherit;text-decoration:underline;font-weight:700;">créer une alerte</a> : tu seras prévenu dès qu\'un objet correspond. Tu peux aussi publier ce que tu proposes en échange !', 'Je n\'ai encore rien trouvé pour ça. Je peux te créer une alerte, pour te prévenir dès qu\'un objet correspond.');
+      return;
+    }
+    const cards = top.map(r => '<a href="#" onclick="assistantOpen(\'' + r.x.id + '\'); return false;" style="display:flex; gap:10px; align-items:center; margin-top:8px; text-decoration:none; color:inherit; background:rgba(255,255,255,.06); border-radius:12px; padding:6px;"><img src="' + esc(r.x.image) + '" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:10px;flex:none;"><span style="min-width:0;"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(r.x.title) + '</b><span style="font-size:12px;opacity:.8;">' + esc(r.x.city || '') + ' · ' + (Number(r.x.price) === 0 ? 'Gratuit' : esc(r.x.price) + ' €') + '</span></span></a>').join('');
+    const nb = res.length;
+    reply('J\'ai trouvé <b>' + nb + ' annonce' + (nb > 1 ? 's' : '') + '</b> ! 🎉' + cards + (nb > 4 ? '<div style="margin-top:8px;font-size:12px;opacity:.8;">Il y en a d\'autres sur l\'accueil.</div>' : ''),
+      'J\'ai trouvé ' + nb + (nb > 1 ? ' annonces' : ' annonce') + ' pour toi. Regarde !');
+    try { $a('searchQuery').value = tokens.join(' '); } catch {}
+  }
 
   paint();
 })();
