@@ -1298,15 +1298,39 @@ function mapOffer(row) {
   };
 }
 
+let reviewRows = [];
+function repOf(userId) {
+  const r = reviewRows.filter(x => x.target_id === userId);
+  if (!r.length) return null;
+  return { avg: r.reduce((a, x) => a + x.stars, 0) / r.length, n: r.length };
+}
+function repHTML(userId) {
+  const r = repOf(userId);
+  return r ? ` • <span title="${r.n} avis">⭐ ${r.avg.toFixed(1).replace('.', ',')} (${r.n})</span>` : ' • <span style="color:var(--muted);">Nouveau membre</span>';
+}
+
+async function rateOffer(offerId, targetId, stars) {
+  try {
+    await db('reviews', { method: 'POST', body: { offer_id: offerId, target_id: targetId, stars: stars } });
+    notify('Merci pour votre avis !');
+    await loadData();
+    renderInbox();
+  } catch (err) {
+    notify(err.message);
+  }
+}
+
 async function loadData() {
   try {
-    const [p, l, v, po, o] = await Promise.all([
+    const [p, l, v, po, o, rv] = await Promise.all([
       db('profiles?select=id,name,city,created_at'),
       db('listings?select=*&order=created_at.desc'),
       db('votes?select=target_id,user_id,fair'),
       db('polls?select=*&order=created_at.desc'),
-      currentUser ? db('offers?select=*&order=created_at.desc') : Promise.resolve([])
+      currentUser ? db('offers?select=*&order=created_at.desc') : Promise.resolve([]),
+      db('reviews?select=offer_id,reviewer_id,target_id,stars').catch(() => [])
     ]);
+    reviewRows = rv || [];
     profiles = {};
     p.forEach(x => { profiles[x.id] = x; });
     listings = l.map(mapListing);
@@ -1669,7 +1693,7 @@ function openDetail(id) {
     ${x.images.length > 1 ? `<div class="thumbs">${x.images.map(src => `<img src="${esc(src)}" alt="" onclick="$('detailMainImg').src = this.src">`).join('')}</div>` : ''}
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
       ${getBadgeHTML(x.mode)}
-      <span style="font-size:13px; color:var(--muted);">📍 ${esc(x.city)} • Membre : <strong>${esc(x.owner)}</strong></span>
+      <span style="font-size:13px; color:var(--muted);">📍 ${esc(x.city)} • Membre : <strong>${esc(x.owner)}</strong>${repHTML(x.ownerId)}</span>
     </div>
     <div style="font-size:22px; font-weight:800; color:var(--green); margin-bottom:10px;">${esc(x.price)} € <span style="font-size:13px; font-weight:500; color:var(--muted);">(${esc(x.condition)})</span></div>
     <p style="font-size:14px; color:var(--ink); line-height:1.6; margin-bottom:16px;">${esc(x.description)}</p>
@@ -2041,6 +2065,13 @@ function renderInbox() {
         </div>
         <p style="font-size:13px; color:var(--ink);">${esc(o.message)}</p>
         ${o.code ? `<div class="hint" style="margin:10px 0 0;">Code de remise TrocPass : <strong>${esc(o.code)}</strong> — à échanger lors de la remise en main propre.</div>` : ''}
+        ${o.status === 'Acceptée' ? (() => {
+          const target = received ? o.senderId : o.ownerId;
+          const done = reviewRows.some(r => r.offer_id === o.id && r.reviewer_id === currentUser.id);
+          return done
+            ? '<div class="hint" style="margin:10px 0 0;">✅ Vous avez noté cet échange.</div>'
+            : `<div style="margin-top:10px; font-size:13px;">Échange réalisé ? Notez ${esc(received ? o.sender : 'le membre')} : ${[1, 2, 3, 4, 5].map(n => `<button type="button" onclick="rateOffer('${esc(o.id)}', '${esc(target)}', ${n})" style="border:0; background:none; font-size:22px; cursor:pointer; color:#f5b301;" aria-label="${n} étoile${n > 1 ? 's' : ''}">★</button>`).join('')}</div>`;
+        })() : ''}
         ${received && o.status === 'En attente' ? `
           <div style="display:flex; gap:8px; margin-top:10px;">
             <button class="btn btn-primary" style="flex:1; padding:7px; font-size:13px;" onclick="decideOffer('${esc(o.id)}', true)">Accepter</button>
