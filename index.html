@@ -1358,7 +1358,7 @@ async function submitSignup(e) {
   if (pw.length < 8) return authFail('Le mot de passe doit contenir au moins 8 caractères.');
   if (pw !== String(fd.get('password2'))) return authFail('Les deux mots de passe ne correspondent pas.');
   const dom = String(fd.get('email')).trim().toLowerCase().split('@')[1] || '';
-  if (/^(mailinator|yopmail|guerrillamail|sharklasers|10minutemail|tempmail|temp-mail|trashmail|getnada|throwawaymail|maildrop|dispostable|fakeinbox|mohmal|emailondeck|mintemail|tempail|discard|spamgourmet|mailnesia|tempr|moakt|mailcatch|burnermail|inboxkitten|mail)\./.test(dom) && dom !== 'mail.com') return authFail('Les adresses e-mail jetables ne sont pas acceptées. Utilisez votre vraie adresse.');
+  if (/^(mailinator|yopmail|guerrillamail|sharklasers|10minutemail|tempmail|temp-mail|trashmail|getnada|throwawaymail|maildrop|dispostable|fakeinbox|mohmal|emailondeck|mintemail|tempail|discard|spamgourmet|mailnesia|tempr|moakt|mailcatch|burnermail|inboxkitten)\./.test(dom) || dom === 'mail.tm') return authFail('Les adresses e-mail jetables ne sont pas acceptées. Utilisez votre vraie adresse.');
   authFail('');
   await withBusy(form, 'Création du compte...', async () => {
     try {
