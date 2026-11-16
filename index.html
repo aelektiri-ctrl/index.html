@@ -699,7 +699,10 @@ button:disabled { opacity: 0.6; cursor: wait; }
 
     <div class="search-panel">
       <div class="search-row">
-        <input class="search-input" id="searchQuery" placeholder="Rechercher un article, une marque, un modèle..." oninput="renderListings()">
+        <div style="position:relative;">
+          <input class="search-input" id="searchQuery" placeholder="Rechercher un article, une marque, un modèle..." oninput="renderListings()" style="padding-right:48px;">
+          <button type="button" id="micBtn" onclick="voiceSearch()" aria-label="Recherche vocale" title="Recherche vocale" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); width:36px; height:36px; border-radius:50%; border:0; background:var(--surface-2); color:var(--ink); font-size:17px; cursor:pointer;">🎤</button>
+        </div>
         <input class="search-input" id="searchCity" placeholder="Ville ou code postal (ex: Le Havre, Rouen...)" oninput="renderListings()">
         <select class="search-select" id="filterMode" onchange="renderListings()">
           <option value="ALL">Tous les modes</option>
@@ -1585,6 +1588,31 @@ function buildCardHTML(item) {
       </div>
     </article>
   `;
+}
+
+let recog = null;
+function voiceSearch() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { notify("La recherche vocale n'est pas disponible sur ce navigateur. Essayez avec Chrome."); return; }
+  const btn = $('micBtn');
+  if (recog) { try { recog.stop(); } catch {} return; }
+  recog = new SR();
+  recog.lang = 'fr-FR';
+  recog.interimResults = false;
+  recog.maxAlternatives = 1;
+  btn.textContent = '🔴';
+  recog.onresult = e => {
+    const t = (e.results[0][0].transcript || '').replace(/[.!?]+$/, '').trim();
+    $('searchQuery').value = t;
+    switchView('market');
+    renderListings();
+    notify('Recherche : « ' + t + ' »');
+  };
+  recog.onerror = e => {
+    notify(e.error === 'not-allowed' ? 'Autorisez le micro pour utiliser la recherche vocale.' : "Je n'ai pas bien entendu, réessayez.");
+  };
+  recog.onend = () => { btn.textContent = '🎤'; recog = null; };
+  try { recog.start(); notify('Je vous écoute… dites par exemple « vélo » ou « console de jeux ».'); } catch { btn.textContent = '🎤'; recog = null; }
 }
 
 function renderListings() {
