@@ -1046,7 +1046,7 @@ button:disabled { opacity: 0.6; cursor: wait; }
   <form id="signupForm" onsubmit="submitSignup(event)">
     <div class="form-group">
       <label>Prénom et nom (ou pseudonyme)</label>
-      <input class="form-control" name="name" required minlength="2" autocomplete="name" placeholder="Ex: Marc D.">
+      <input class="form-control" name="name" required minlength="2" autocomplete="name" placeholder="Votre prénom, ex : Marc">
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -1502,6 +1502,7 @@ async function submitSignup(e) {
       const shareP = fd.get('sharePhone');
       form.reset();
       await finishAuth(data, `Bienvenue ${(data.user.user_metadata || {}).name || ''} ! Votre compte est créé.`);
+      try { window.welcomeSpeak((data.user.user_metadata || {}).name); } catch {}
       if (rawPhone) {
         try { await savePhone(rawPhone, shareP); await loadData(); notify(shareP ? 'Numéro enregistré : partagé uniquement avec vos échanges acceptés.' : 'Numéro enregistré, non partagé.'); } catch {}
       }
@@ -2897,7 +2898,7 @@ function setupInstall() {
   }
 }
 
-const APP_VERSION='2026-11-16-1';
+const APP_VERSION='2026-11-16-2';
 (function(){
   async function checkVersion(){
     try{
@@ -2971,9 +2972,16 @@ loadData();
     let seen = '0';
     try { seen = sessionStorage.getItem('avt_welcomed') || '0'; sessionStorage.setItem('avt_welcomed', '1'); } catch {}
     if (seen === '1') return;
-    const name = (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? ' ' + currentUser.name.split(' ')[0] : '';
-    speak('Bienvenue' + name + ' sur À Vos Trocs. Échangez vos objets, sans dépenser un euro. Bonne visite !');
+    window.welcomeSpeak();
   }
+  window.welcomeSpeak = function (nameIn) {
+    if (!voiceOn) return;
+    let n = nameIn || ((typeof currentUser !== 'undefined' && currentUser && currentUser.name !== 'Membre') ? currentUser.name : '');
+    n = String(n || '').trim().split(/[\s.]+/)[0];
+    const hello = n ? 'Bienvenue ' + n + ' sur À Vos Trocs !' : 'Bienvenue sur À Vos Trocs !';
+    try { sessionStorage.setItem('avt_welcomed', '1'); } catch {}
+    speak(hello + ' Ici, on échange ses objets sans dépenser un euro, ou avec une petite soulte. Les échanges se font entre membres inscrits, avec des avis et une protection contre les faux comptes. Et les cent premiers membres ont dix photos par annonce, gratuitement. Bonne visite !');
+  };
   addEventListener('pointerdown', welcome, true);
 
   window.toggleVoice = function () {
