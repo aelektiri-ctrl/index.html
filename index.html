@@ -1357,6 +1357,8 @@ async function submitSignup(e) {
   const pw = String(fd.get('password'));
   if (pw.length < 8) return authFail('Le mot de passe doit contenir au moins 8 caractères.');
   if (pw !== String(fd.get('password2'))) return authFail('Les deux mots de passe ne correspondent pas.');
+  const dom = String(fd.get('email')).trim().toLowerCase().split('@')[1] || '';
+  if (/^(mailinator|yopmail|guerrillamail|sharklasers|10minutemail|tempmail|temp-mail|trashmail|getnada|throwawaymail|maildrop|dispostable|fakeinbox|mohmal|emailondeck|mintemail|tempail|discard|spamgourmet|mailnesia|tempr|moakt|mailcatch|burnermail|inboxkitten|mail)\./.test(dom) && dom !== 'mail.com') return authFail('Les adresses e-mail jetables ne sont pas acceptées. Utilisez votre vraie adresse.');
   authFail('');
   await withBusy(form, 'Création du compte...', async () => {
     try {
@@ -2242,15 +2244,16 @@ async function openAdmin() {
       ok = await db('rpc/admin_access', { method: 'POST', body: { p_code: code.trim() } });
     }
     if (!ok) { adminState = null; notify("Code incorrect. Accès réservé à l'administrateur."); return; }
-    const [members, allOffers, payments, reports, sponsors] = await Promise.all([
+    const [members, allOffers, payments, reports, sponsors, risk] = await Promise.all([
       db('rpc/admin_members', { method: 'POST', body: {} }),
       db('offers?select=*&order=created_at.desc'),
       db('payments?select=*&order=created_at.desc'),
       db('reports?select=*&order=created_at.desc'),
-      db('sponsor_requests?select=*&order=created_at.desc')
+      db('sponsor_requests?select=*&order=created_at.desc'),
+      db('rpc/admin_risk', { method: 'POST', body: {} })
     ]);
     await loadData();
-    adminState = { members, offers: allOffers.map(mapOffer), payments, reports, sponsors };
+    adminState = { members, offers: allOffers.map(mapOffer), payments, reports, sponsors, risk: risk || [] };
     showView('admin');
   } catch (err) {
     notify(err.message);
@@ -2260,9 +2263,14 @@ async function openAdmin() {
 function adminData(kind) {
   const a = adminState;
   if (kind === 'membres') return {
-    heads: ['Nom', 'E-mail', 'Ville', 'Inscrit le', 'Annonces', 'Propositions'],
-    rows: a.members.map(u => [u.name, u.email, u.city, dateFR(u.created_at),
-      listings.filter(x => x.ownerId === u.id).length, a.offers.filter(o => o.senderId === u.id).length])
+    heads: ['Nom', 'E-mail', 'Ville', 'Inscrit le', 'Annonces', 'Propositions', 'Risque', 'Statut'],
+    rows: a.members.map(u => {
+      const r = (a.risk || []).find(x => x.id === u.id) || { score: 0, banned: false };
+      return [u.name, u.email, u.city, dateFR(u.created_at),
+        listings.filter(x => x.ownerId === u.id).length, a.offers.filter(o => o.senderId === u.id).length,
+        r.score >= 5 ? 'Élevé (' + r.score + ')' : r.score >= 2 ? 'Moyen (' + r.score + ')' : 'Faible (' + r.score + ')',
+        r.banned ? 'Bloqué' : 'Actif'];
+    })
   };
   if (kind === 'annonces') return {
     heads: ['Titre', 'Espace', 'Catégorie', 'Valeur (€)', 'Ville', 'Propriétaire', 'Publiée le', 'Photos', 'Boost', 'Équité'],
@@ -2340,7 +2348,7 @@ function renderAdmin() {
       <div style="height:14px;"></div>
       ${adminTable(['Option vendue', 'Recettes'], Object.keys(payTypes).map(t => [esc(t), fmtEuro(payTypes[t])]))}
     </div>
-    ${adminSection('Membres', 'membres')}
+    ${adminSection('Membres', 'membres', i => { const m = a.members[i]; const bl = ((a.risk || []).find(x => x.id === m.id) || {}).banned; return `<button class="btn btn-outline btn-sm" onclick="adminToggleBan('${esc(m.id)}', ${bl ? 'false' : 'true'})">${bl ? 'Débloquer' : 'Bloquer'}</button>`; })}
     ${adminSection('Annonces', 'annonces', i => `<button class="btn btn-outline btn-sm" onclick="adminDeleteListing('${esc(listings[i].id)}')">Supprimer</button>`)}
     ${adminSection('Propositions', 'propositions')}
     ${adminSection('Paiements', 'paiements')}
@@ -2374,6 +2382,17 @@ async function changeAdminCode(e) {
     await db('rpc/admin_set_code', { method: 'POST', body: { p_code: code } });
     form.reset();
     notify('Code administrateur modifié. Gardez-le précieusement.');
+  } catch (err) {
+    notify(err.message);
+  }
+}
+
+async function adminToggleBan(id, ban) {
+  if (ban && !confirm('Bloquer ce membre ? Il ne pourra plus publier, proposer ni voter.')) return;
+  try {
+    await db('rpc/admin_set_ban', { method: 'POST', body: { p_user: id, p_ban: ban, p_reason: ban ? 'Bloqué par l\'administrateur' : '' } });
+    notify(ban ? 'Membre bloqué.' : 'Membre débloqué.');
+    await openAdmin();
   } catch (err) {
     notify(err.message);
   }
