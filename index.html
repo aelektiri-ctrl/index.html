@@ -617,6 +617,9 @@ body.hc { --surface: #000; --surface-2: #0d0d0d; --ink: #fff; --muted: #f0f0f0; 
 body.hc a { text-decoration: underline; }
 body.rm *, body.rm *::before, body.rm *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+#musicMenu { display: none; position: fixed; left: 12px; bottom: 60px; z-index: 70; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 14px; padding: 12px; width: min(300px, calc(100vw - 24px)); box-shadow: 0 12px 32px rgba(0,0,0,.5); font-size: 14px; }
+#musicMenu button { display: block; width: 100%; text-align: left; margin-top: 6px; border: 1px solid var(--border); background: var(--surface-2); color: var(--ink); border-radius: 10px; padding: 9px 12px; cursor: pointer; font-size: 14px; }
+#musicMenu button[aria-pressed="true"] { background: #f7d47c; color: #15120a; font-weight: 700; }
 #a11yMenu { display: none; position: fixed; left: 12px; bottom: 60px; z-index: 70; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 14px; padding: 12px; width: min(300px, calc(100vw - 24px)); box-shadow: 0 12px 32px rgba(0,0,0,.5); font-size: 14px; }
 #a11yMenu button { margin: 4px 4px 0 0; border: 1px solid var(--border); background: var(--surface-2); color: var(--ink); border-radius: 999px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
 #a11yMenu button[aria-pressed="true"] { background: #f7d47c; color: #15120a; font-weight: 700; }
@@ -630,6 +633,7 @@ body.rm *, body.rm *::before, body.rm *::after { animation: none !important; tra
     <nav class="nav-tabs">
       <button class="nav-tab active" id="tab-market" onclick="switchView('market')">Accueil</button>
       <button class="nav-tab" id="tab-swipe" onclick="switchView('swipe')">🔥 Découvrir</button>
+      <button class="nav-tab" id="tab-communautes" onclick="switchView('communautes')">👥 Communautés</button>
       <button class="nav-tab" id="tab-enfants" onclick="switchView('enfants')">🧸 Enfants</button>
       <button class="nav-tab" id="tab-services" onclick="switchView('services')">🛠️ Services</button>
       <button class="nav-tab" id="tab-troc" onclick="switchView('troc')">Échange 100 % troc</button>
@@ -744,6 +748,7 @@ body.rm *, body.rm *::before, body.rm *::after { animation: none !important; tra
         </div>
         <div id="searchHist" style="display:flex; gap:6px; flex-wrap:wrap; margin:0 0 8px;"></div>
         <input class="search-input" id="searchCity" placeholder="Ville ou code postal (ex: Le Havre, Rouen...)" oninput="renderListings()">
+        <select class="search-select" id="filterCountry" onchange="renderListings()"><option value="">🌍 Tous les pays</option><option>France</option><option>Belgique</option><option>Suisse</option><option>Luxembourg</option><option>Allemagne</option><option>Espagne</option><option>Italie</option><option>Portugal</option><option>Pays-Bas</option><option>Royaume-Uni</option><option>Irlande</option><option>Maroc</option><option>Algérie</option><option>Tunisie</option><option>Sénégal</option><option>Côte d'Ivoire</option><option>Canada</option><option>États-Unis</option><option>Autre pays</option></select>
         <select class="search-select" id="filterMode" onchange="renderListings()">
           <option value="ALL">Tous les modes</option>
           <option value="TROC">Échange 100 % troc</option>
@@ -783,6 +788,19 @@ body.rm *, body.rm *::before, body.rm *::after { animation: none !important; tra
   <div id="view-swipe" class="view">
     <div class="section-header"><div><h2>Découvrir</h2><p style="font-size:13px; color:var(--muted);">Glissez à droite pour garder une annonce en favori, à gauche pour passer. Touchez la carte pour la voir en détail.</p></div></div>
     <div id="swipeArea" style="max-width:420px; margin:0 auto;"></div>
+  </div>
+
+  <div id="view-communautes" class="view">
+    <div class="section-header">
+      <div>
+        <h2>👥 Mes communautés privées</h2>
+        <p style="font-size:13px; color:var(--muted);">Crée ton groupe (famille, amis, quartier, boutique…) : vos annonces et échanges restent entre vous, invisibles du reste du site. Idéal pour la vente directe.</p>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn btn-primary" onclick="createCommunity()">+ Créer ma communauté</button><button class="btn btn-outline" onclick="joinCommunityPrompt()">🔑 Rejoindre avec un code</button></div>
+    </div>
+    <div class="hint" style="margin:0 0 12px;">🔒 Seuls les membres voient le contenu. Les échanges entre membres d'une communauté se font sous leur responsabilité, sans frais de la plateforme.</div>
+    <div id="commList"></div>
+    <div id="commOpen"></div>
   </div>
 
   <div id="view-enfants" class="view">
@@ -942,6 +960,10 @@ body.rm *, body.rm *::before, body.rm *::after { animation: none !important; tra
       <div class="form-group">
         <label>Ville</label>
         <input class="form-control" name="city" required placeholder="Ex: Le Havre">
+      </div>
+      <div class="form-group">
+        <label>Pays</label>
+        <select class="form-control" name="country"><option>France</option><option>Belgique</option><option>Suisse</option><option>Luxembourg</option><option>Allemagne</option><option>Espagne</option><option>Italie</option><option>Portugal</option><option>Pays-Bas</option><option>Royaume-Uni</option><option>Irlande</option><option>Maroc</option><option>Algérie</option><option>Tunisie</option><option>Sénégal</option><option>Côte d'Ivoire</option><option>Canada</option><option>États-Unis</option><option>Autre pays</option></select>
       </div>
     </div>
     <div class="form-group" id="wantFieldGroup">
@@ -1408,6 +1430,7 @@ function mapListing(row) {
     condition: row.condition,
     price: row.price,
     city: row.city,
+    country: row.country || 'France',
     want: row.want || '',
     description: row.description || '',
     images: images,
@@ -1525,6 +1548,7 @@ async function loadData() {
     }));
     offers = o.map(mapOffer);
     await loadServices();
+    await loadCommunities();
     dataLoaded = true;
     loadError = false;
     lastLoad = Date.now();
@@ -1793,6 +1817,7 @@ function renderCurrentView() {
   if (view === 'swipe') renderSwipe();
   if (view === 'services') renderServices();
   if (view === 'enfants') renderKids();
+  if (view === 'communautes') renderCommunities();
   if (view === 'troc') renderFilteredGrid('TROC', 'trocGrid');
   if (view === 'argent') { renderFilteredGrid('HYBRIDE', 'hybrideGrid'); renderFilteredGrid('VENTE', 'occasionGrid'); }
   if (view === 'votes') renderVotes();
@@ -1885,6 +1910,114 @@ function voiceSearch() {
 }
 
 
+
+
+/* ===== Communautés privées ===== */
+let communities = [], commMembers = [], cposts = [], ccomments = [], openCommId = null;
+async function loadCommunities() {
+  try {
+    if (!currentUser) { communities = []; commMembers = []; cposts = []; ccomments = []; return; }
+    [communities, commMembers, cposts, ccomments] = await Promise.all([
+      db('communities?select=*&order=created_at.desc'),
+      db('community_members?select=community_id,user_id'),
+      db('community_posts?select=*&order=created_at.desc'),
+      db('community_comments?select=*&order=created_at.asc')
+    ]);
+    const code = localStorage.getItem('avt_joincode');
+    if (code) { localStorage.removeItem('avt_joincode'); joinCommunity(code, true); }
+  } catch { communities = []; commMembers = []; cposts = []; ccomments = []; }
+}
+function commLink(c) { return SITE_URL + '?c=' + c.invite_code; }
+function renderCommunities() {
+  if (!currentUser) { $('commList').innerHTML = '<div class="hint">Connecte-toi pour créer ou rejoindre une communauté.</div>'; $('commOpen').innerHTML = ''; return; }
+  $('commList').innerHTML = communities.length ? communities.map(c => {
+    const n = commMembers.filter(m => m.community_id === c.id).length, mine = c.owner_id === currentUser.id;
+    return `<div class="card" style="padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; gap:8px; align-items:center; flex-wrap:wrap;">
+      <div><b>${esc(c.name)}</b>${mine ? ' 👑' : ''}<div style="font-size:12px; color:var(--muted);">${n} membre${n > 1 ? 's' : ''}${c.description ? ' · ' + esc(c.description) : ''}</div></div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;"><button class="btn btn-primary" style="padding:6px 12px;" onclick="openCommunity('${c.id}')">Ouvrir</button><button class="btn btn-outline" style="padding:6px 12px;" onclick="inviteCommunity('${c.id}')">Inviter</button><button class="btn btn-outline" style="padding:6px 12px;" onclick="leaveCommunity('${c.id}')">${mine ? 'Supprimer' : 'Quitter'}</button></div></div>`;
+  }).join('') : '<div class="hint">Tu n\'as pas encore de communauté. Crée la tienne ou rejoins-en une avec un code.</div>';
+  renderCommOpen();
+}
+function renderCommOpen() {
+  const c = communities.find(x => x.id === openCommId); const el = $('commOpen');
+  if (!c) { el.innerHTML = ''; return; }
+  const posts = cposts.filter(p => p.community_id === c.id);
+  el.innerHTML = `<h3 style="margin:16px 0 8px;">📌 ${esc(c.name)}</h3>
+    <div class="hint" style="margin:0 0 10px;">Code d'invitation : <b>${esc(c.invite_code)}</b> · <a href="#" onclick="inviteCommunity('${c.id}'); return false;" style="color:inherit;">Partager le lien</a></div>
+    <form onsubmit="submitCPost(event, '${c.id}')" class="card" style="padding:12px; margin-bottom:12px; display:grid; gap:8px;">
+      <input class="form-control" name="title" required minlength="2" maxlength="120" placeholder="Ce que tu proposes ou cherches (ex : Vélo enfant à échanger)">
+      <textarea class="form-control" name="description" rows="2" maxlength="1500" placeholder="Détails, état, ce que tu souhaites en échange…"></textarea>
+      <input class="form-control" name="price" maxlength="60" placeholder="Prix ou échange (ex : 40 €, contre une guitare)">
+      <input type="file" name="photo" accept="image/*" style="font-size:13px;">
+      <button class="btn btn-primary" type="submit">Publier dans la communauté</button>
+    </form>
+    ${posts.length ? posts.map(p => {
+      const cm = ccomments.filter(x => x.post_id === p.id);
+      return `<div class="card" style="padding:12px; margin-bottom:10px;">
+        ${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.title)}" style="width:100%; max-height:240px; object-fit:cover; border-radius:10px; margin-bottom:8px;">` : ''}
+        <b>${esc(p.title)}</b>${p.price ? ` · <span style="color:var(--green);">${esc(p.price)}</span>` : ''}
+        <div style="font-size:12px; color:var(--muted);">Par ${esc((profiles[p.author_id] || {}).name || 'Membre')} · ${dateFR(p.created_at)}</div>
+        ${p.description ? `<p style="margin:6px 0;">${esc(p.description)}</p>` : ''}
+        ${cm.map(x => `<div style="font-size:13px; margin:4px 0; padding:6px 8px; background:var(--surface-2); border-radius:8px;"><b>${esc((profiles[x.author_id] || {}).name || 'Membre')}</b> : ${esc(x.body)}</div>`).join('')}
+        <form onsubmit="addCComment(event, '${p.id}')" style="display:flex; gap:6px; margin-top:6px;"><input class="form-control" name="body" required maxlength="600" placeholder="Répondre / proposer…" style="flex:1;"><button class="btn btn-outline" type="submit" style="padding:6px 12px;">Envoyer</button></form>
+        ${p.author_id === currentUser.id || c.owner_id === currentUser.id ? `<button class="btn btn-outline" style="margin-top:6px; padding:4px 10px; font-size:12px;" onclick="delCPost('${p.id}')">Supprimer</button>` : ''}
+      </div>`;
+    }).join('') : '<div class="hint">Aucune annonce pour le moment : publie la première !</div>'}`;
+}
+function openCommunity(id) { openCommId = id; renderCommunities(); $('commOpen').scrollIntoView({ behavior: 'smooth' }); }
+async function createCommunity() {
+  if (!requireAuth(createCommunity, 'créer une communauté')) return;
+  const name = prompt('Nom de ta communauté (ex : Famille Martin, Troc du quartier) :'); if (!name || name.trim().length < 3) return;
+  const desc = prompt('Courte description (facultatif) :') || '';
+  try { const c = await db('rpc/create_community', { method: 'POST', body: { p_name: name, p_desc: desc } }); openCommId = c.id; notify('Communauté créée ✅ Invite tes proches avec le bouton « Inviter ».'); await loadData(); renderCommunities(); } catch (x) { notify(x.message); }
+}
+async function joinCommunity(code, silent) {
+  try {
+    const info = await db('rpc/community_info', { method: 'POST', body: { p_code: code } });
+    if (!info || !info.length) { notify('Code de communauté invalide.'); return; }
+    if (!silent || confirm('Rejoindre la communauté « ' + info[0].name + ' » ?')) {
+      const id = await db('rpc/join_community', { method: 'POST', body: { p_code: code } });
+      openCommId = id; notify('Bienvenue dans la communauté ✅'); await loadData(); switchView('communautes');
+    }
+  } catch (x) { notify(x.message); }
+}
+function joinCommunityPrompt() {
+  if (!requireAuth(joinCommunityPrompt, 'rejoindre une communauté')) return;
+  const c = prompt('Entre le code de la communauté :'); if (c) joinCommunity(c.trim(), false);
+}
+function inviteCommunity(id) {
+  const c = communities.find(x => x.id === id); if (!c) return;
+  shareLink('Rejoins ma communauté « ' + c.name + ' » sur À Vos Trocs (code ' + c.invite_code + ') :', commLink(c), c.name);
+}
+async function leaveCommunity(id) {
+  const c = communities.find(x => x.id === id); if (!c) return;
+  if (!confirm(c.owner_id === currentUser.id ? 'Supprimer cette communauté pour tous ses membres ?' : 'Quitter cette communauté ?')) return;
+  try {
+    if (c.owner_id === currentUser.id) await db('communities?id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+    else await db('community_members?community_id=eq.' + encodeURIComponent(id) + '&user_id=eq.' + encodeURIComponent(currentUser.id), { method: 'DELETE' });
+    if (openCommId === id) openCommId = null; await loadData(); renderCommunities();
+  } catch (x) { notify(x.message); }
+}
+async function submitCPost(e, cid) {
+  e.preventDefault(); const form = e.target, fd = new FormData(form);
+  await withBusy(form, 'Publication...', async () => {
+    try {
+      let image = null; const f = fd.get('photo');
+      if (f && f.size) { const blob = await compressImage(f); if (!blob) throw new Error('Photo illisible, réessaie avec une autre image.'); image = await uploadPhoto(blob, 0); }
+      await db('community_posts', { method: 'POST', body: { community_id: cid, author_id: currentUser.id, title: String(fd.get('title')).trim(), description: String(fd.get('description') || '').trim(), price: String(fd.get('price') || '').trim(), image } });
+      form.reset(); await loadData(); renderCommunities();
+    } catch (x) { notify(x.message); }
+  });
+}
+async function addCComment(e, pid) {
+  e.preventDefault(); const form = e.target, body = String(new FormData(form).get('body')).trim(); if (!body) return;
+  try { await db('community_comments', { method: 'POST', body: { post_id: pid, author_id: currentUser.id, body } }); form.reset(); await loadData(); renderCommunities(); } catch (x) { notify(x.message); }
+}
+async function delCPost(id) {
+  if (!confirm('Supprimer cette annonce ?')) return;
+  try { await db('community_posts?id=eq.' + encodeURIComponent(id), { method: 'DELETE' }); await loadData(); renderCommunities(); } catch (x) { notify(x.message); }
+}
+(function () { try { const c = new URLSearchParams(location.search).get('c'); if (c) localStorage.setItem('avt_joincode', c); } catch {} })();
 
 /* ===== Espace Enfants ===== */
 let kidTheme = '';
@@ -2029,11 +2162,11 @@ function geoOf(name) {
   if (!key) return null;
   if (key in geoCache) return geoCache[key];
   if (!geoPending[key]) {
-    geoPending[key] = fetch('https://api-adresse.data.gouv.fr/search/?type=municipality&limit=1&q=' + encodeURIComponent(key))
+    geoPending[key] = fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=fr&name=' + encodeURIComponent(key))
       .then(r => r.json())
       .then(j => {
-        const c = j && j.features && j.features[0] && j.features[0].geometry.coordinates;
-        geoCache[key] = c ? [c[1], c[0]] : null;
+        const c = j && j.results && j.results[0];
+        geoCache[key] = c ? [c.latitude, c.longitude] : null;
         saveLocal('avt_geo', geoCache);
       })
       .catch(() => { delete geoPending[key]; })
@@ -2079,6 +2212,7 @@ function renderListings() {
     }
     const matchCat = activeCat === 'Toutes' || (activeCat === 'Favoris' && favs.includes(item.id)) || item.category === activeCat;
     const matchMode = mode === 'ALL' || item.mode === mode;
+    if ($('filterCountry').value && item.country !== $('filterCountry').value) return false;
     const matchCity = geoOn || !city || item.city.toLowerCase().includes(city);
     const matchText = !q || [item.title, item.description, item.want, item.category].join(' ').toLowerCase().includes(q);
     return matchCat && matchMode && matchCity && matchText;
@@ -2195,7 +2329,7 @@ function openDetail(id) {
     ${x.images.length > 1 ? `<div class="thumbs">${x.images.map(src => `<img src="${esc(src)}" alt="" onclick="$('detailMainImg').src = this.src">`).join('')}</div>` : ''}
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
       ${getBadgeHTML(x.mode)}
-      <span style="font-size:13px; color:var(--muted);">📍 ${esc(x.city)} • Membre : <strong>${esc(x.owner)}</strong>${repHTML(x.ownerId)}${seenHTML(x.ownerId)}</span>
+      <span style="font-size:13px; color:var(--muted);">📍 ${esc(x.city)}${x.country && x.country !== 'France' ? ', ' + esc(x.country) : ''} • Membre : <strong>${esc(x.owner)}</strong>${repHTML(x.ownerId)}${seenHTML(x.ownerId)}</span>
     </div>
     <div style="font-size:22px; font-weight:800; color:var(--green); margin-bottom:10px;">${esc(priceLabel(x))} <span style="font-size:13px; font-weight:500; color:var(--muted);">(${esc(x.condition)})</span></div>
     <p style="font-size:14px; color:var(--ink); line-height:1.6; margin-bottom:16px;">${esc(x.description)}</p>
@@ -2203,6 +2337,7 @@ function openDetail(id) {
       <div style="font-size:12px; font-weight:700; color:var(--green); text-transform:uppercase;">Conditions d'échange / vente</div>
       <div style="font-size:14px; font-weight:600; margin-top:4px;">${esc(x.want)}</div>
     </div>
+    ${x.country && x.country !== 'France' ? `<div class="hint" style="margin:0 0 12px;">🌍 <strong>Échange à distance (${esc(x.country)})</strong> : privilégiez un envoi suivi et assuré, échangez les numéros de suivi, et n'envoyez rien tant que l'autre membre n'a pas confirmé l'envoi de son côté. Vérifiez ses avis.</div>` : ''}
     <div style="display:flex; gap:10px;">
       ${isMine(x)
         ? `<button class="btn btn-outline" style="flex:1;" onclick="deleteItem('${esc(x.id)}')">Supprimer mon annonce</button>`
@@ -2378,6 +2513,7 @@ async function submitListing(e) {
           condition: fd.get('condition'),
           price: mode === 'DON' ? 0 : Math.round(Number(fd.get('price'))),
           city: String(fd.get('city')).trim(),
+          country: String(fd.get('country') || 'France'),
           want: mode === 'DON' ? 'Don gratuit : à récupérer sur place' : mode === 'VENTE' ? `Vente directe ${fd.get('price')} €` : String(fd.get('want')).trim(),
           description: String(fd.get('description')).trim(),
           images: images,
@@ -3148,7 +3284,7 @@ function setupInstall() {
   }
 }
 
-const APP_VERSION='2026-11-16-9';
+const APP_VERSION='2026-11-16-10';
 (function(){
   async function checkVersion(){
     try{
@@ -3180,6 +3316,7 @@ loadData();
 </script>
 
 <!-- Ambiance : voix de bienvenue et musique douce (facultatives) -->
+<div id="musicMenu"></div>
 <div id="a11yMenu" role="dialog" aria-label="Options d'accessibilité">
   <strong>♿ Accessibilité</strong>
   <button type="button" id="readBtn" onclick="readPage()" style="width:100%; margin:8px 0 0; background:#f7d47c; color:#15120a; font-weight:700;">📖 Lire la page à voix haute</button>
@@ -3192,7 +3329,7 @@ loadData();
   <p style="font-size:12px; margin:8px 0 0; opacity:.85;">« Tout lire » lit aussi les messages du site. Chaque annonce a son bouton 🔊.</p>
 </div>
 <div id="soundDock" style="position:fixed; left:12px; bottom:12px; z-index:50; display:flex; gap:8px;">
-  <button id="musicBtn" type="button" onclick="toggleMusic()" aria-pressed="false" title="Musique d'ambiance" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🎵 Musique</button>
+  <button id="musicBtn" type="button" onclick="toggleMusicMenu()" aria-pressed="false" title="Musique d'ambiance" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🎵 Musique</button>
   <button id="voiceBtn" type="button" onclick="toggleVoice()" aria-pressed="true" title="Voix de bienvenue" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🔊 Voix</button>
   <button id="a11yBtn" type="button" onclick="toggleA11y()" aria-label="Accessibilité" title="Accessibilité" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">♿ Accès</button>
 </div>
@@ -3329,7 +3466,7 @@ loadData();
   };
 
   /* ---------- Musique : lounge chaleureux, piano électrique + basse + petite mélodie qui reste en tête ---------- */
-  const BPM = 92, STEP = 60 / BPM / 4;                 // 16 pas par mesure
+  let STEP = 60 / 92 / 4;                 // 16 pas par mesure
   const mf = m => 440 * Math.pow(2, (m - 69) / 12);
   // Am – F – C – G, boucle de 4 mesures
   const CH = [[57, 60, 64, 67], [53, 57, 60, 64], [60, 64, 67, 71], [55, 59, 62, 66]];
@@ -3408,23 +3545,80 @@ loadData();
     s.connect(hp); hp.connect(g); g.connect(master); s.start(t, Math.random() * 0.5, 0.1);
   }
 
-  function playStep(i, t) {
-    const bar = Math.floor(i / 16) % 4, s = i % 16, loop = Math.floor(i / 64);
+  function playLounge(i, t) {
+    const bar = Math.floor(i / 16) % 4, st = i % 16, loop = Math.floor(i / 64);
     const chord = CH[bar];
-    if (s === 0) { chord.forEach((m, k) => epiano(m, t + k * 0.012, STEP * 9, 0.05)); bass(BASS[bar], t, STEP * 5, 0.2); kick(t, 0.22); }
-    if (s === 6) bass(BASS[bar], t, STEP * 3, 0.14);
-    if (s === 8) kick(t, 0.12);
-    if (s === 10) { chord.slice(1).forEach(m => epiano(m, t, STEP * 3, 0.03)); bass(BASS[bar] + 12, t, STEP * 2, 0.1); }
-    if (s % 2 === 0) shaker(t + (s % 4 === 2 ? 0.01 : 0), s % 4 === 2 ? 0.05 : 0.025);
-    if (loop >= 1) {      // à partir du 2e tour, la mélodie arrive
+    if (st === 0) { chord.forEach((m, k) => epiano(m, t + k * 0.012, STEP * 9, 0.05)); bass(BASS[bar], t, STEP * 5, 0.2); kick(t, 0.22); }
+    if (st === 6) bass(BASS[bar], t, STEP * 3, 0.14);
+    if (st === 8) kick(t, 0.12);
+    if (st === 10) { chord.slice(1).forEach(m => epiano(m, t, STEP * 3, 0.03)); bass(BASS[bar] + 12, t, STEP * 2, 0.1); }
+    if (st % 2 === 0) shaker(t + (st % 4 === 2 ? 0.01 : 0), st % 4 === 2 ? 0.05 : 0.025);
+    if (loop >= 1) {
       const mel = (loop % 2 === 1 ? MEL_A : MEL_B)[bar];
-      if (mel[s] !== undefined && Math.random() < 0.93) pluck(mel[s], t + (Math.random() * 0.012), STEP * 4, 0.075);
+      if (mel[st] !== undefined && Math.random() < 0.93) pluck(mel[st], t + (Math.random() * 0.012), STEP * 4, 0.075);
     }
   }
+  function trumpet(m, t, dur, vel) {      // son de trompette bouchée, doux
+    const g = ctx.createGain(), o = ctx.createOscillator(), o2 = ctx.createOscillator(), lp = ctx.createBiquadFilter(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    o.type = 'triangle'; o.frequency.value = mf(m); o2.type = 'sine'; o2.frequency.value = mf(m) * 2;
+    lfo.frequency.value = 5; lg.gain.value = 4; lfo.connect(lg); lg.connect(o.frequency);
+    lp.type = 'lowpass'; lp.frequency.value = 1700;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vel, t + 0.06); g.gain.setValueAtTime(vel, t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(master); g.connect(fxIn);
+    o.start(t); o2.start(t); lfo.start(t); o.stop(t + dur + 0.1); o2.stop(t + dur + 0.1); lfo.stop(t + dur + 0.1);
+  }
+  function snare(t, vel) {
+    const s2 = ctx.createBufferSource(), g = ctx.createGain(), bp = ctx.createBiquadFilter();
+    s2.buffer = noiseBuf; bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.7;
+    env(g, t, 0.002, 0.11, vel); s2.connect(bp); bp.connect(g); g.connect(master); s2.start(t, Math.random() * 0.5, 0.2);
+  }
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const TR = {
+    blues: { name: '🎷 Blues lent', bpm: 76, swing: 0.67, walk: [0, 4, 7, 9], kick: [0, 8], snare: [4, 12], comp: [0, 6, 10], melSteps: [0, 3, 6, 8, 10, 13],
+      prog: [[57, 61, 64, 67, 45], [57, 61, 64, 67, 45], [57, 61, 64, 67, 45], [57, 61, 64, 67, 45], [62, 66, 69, 72, 50], [62, 66, 69, 72, 50], [57, 61, 64, 67, 45], [57, 61, 64, 67, 45], [64, 68, 71, 74, 52], [62, 66, 69, 72, 50], [57, 61, 64, 67, 45], [64, 68, 71, 74, 52]],
+      scale: [69, 72, 74, 75, 76, 79, 81], melP: bar => bar % 2 === 0 ? 0.55 : 0.2, mel: 'pluck' },
+    rnb: { name: '🎹 Rhythm & Blues', bpm: 84, swing: 0.2, walk: null, kick: [0, 6, 10], snare: [4, 12], comp: [0, 7, 10, 14], melSteps: [0, 3, 6, 8, 11, 14],
+      prog: [[60, 64, 67, 71, 48], [57, 60, 64, 67, 45], [62, 65, 69, 72, 50], [55, 59, 62, 65, 43], [60, 64, 67, 71, 48], [57, 60, 64, 67, 45], [53, 57, 60, 64, 41], [55, 59, 62, 65, 43]],
+      scale: [72, 74, 76, 79, 81, 84], melP: () => 0.45, mel: 'pluck' },
+    cool: { name: '🎺 Jazz cool (esprit Miles)', bpm: 68, swing: 0.67, walk: [0, 3, 7, 5], kick: [], snare: [], comp: [6, 14], melSteps: [0, 6, 8, 12],
+      prog: [[57, 60, 62, 65, 50], [57, 60, 62, 65, 50], [57, 60, 62, 65, 50], [57, 60, 62, 65, 50], [58, 61, 63, 66, 51], [58, 61, 63, 66, 51], [57, 60, 62, 65, 50], [57, 60, 62, 65, 50]],
+      scale: [74, 77, 79, 81, 84, 86], melP: bar => bar % 2 === 0 ? 0.5 : 0.25, mel: 'trumpet' }
+  };
+  const TRACK_LIST = [['lounge', '☕ Lounge jazz'], ['blues', TR.blues.name], ['rnb', TR.rnb.name], ['cool', TR.cool.name]];
+  let trk = store.get('avt_track', 'lounge'); if (!TRACK_LIST.some(x => x[0] === trk)) trk = 'lounge';
+  const bpmOf = k => k === 'lounge' ? 92 : TR[k].bpm;
+  STEP = 60 / bpmOf(trk) / 4;
+  function playGen(T, i, t) {
+    const bar = Math.floor(i / 16) % T.prog.length, st = i % 16, ch = T.prog[bar], root = ch[4];
+    const tt = t + (st % 4 === 2 ? STEP * 2 * T.swing / 2 : 0);
+    if (st === 0) ch.slice(0, 4).forEach((m, k) => epiano(m, t + k * 0.015, STEP * 7, 0.04));
+    else if (T.comp.includes(st)) ch.slice(1, 4).forEach(m => epiano(m, tt, STEP * 2.5, 0.028));
+    if (T.walk) { if (st % 4 === 0) bass(root + T.walk[(st / 4) % 4], t, STEP * 3.6, 0.2); }
+    else { if ([0, 6, 10].includes(st)) bass(root + (st === 10 ? 7 : 0), t, STEP * 3, 0.2); if (st === 14) bass(root + 12, t, STEP * 2, 0.1); }
+    if (T.kick.includes(st)) kick(t, st === 0 ? 0.2 : 0.11);
+    if (T.snare.includes(st)) snare(t, 0.05);
+    if (st % 4 === 0 || st % 4 === 2) shaker(tt, st % 4 === 0 ? 0.03 : 0.045);
+    if (T.melSteps.includes(st) && Math.random() < T.melP(bar)) {
+      const m = pick(T.scale);
+      if (T.mel === 'trumpet') trumpet(m, tt, STEP * 6, 0.07); else pluck(m, tt, STEP * 4, 0.075);
+    }
+  }
+  function playStep(i, t) { if (trk === 'lounge') playLounge(i, t); else playGen(TR[trk], i, t); }
   function sched() {
     if (!ctx || !musicOn) return;
     while (nextT < ctx.currentTime + 0.6) { playStep(stp, nextT); nextT += STEP; stp++; }
   }
+  window.musicTracks = TRACK_LIST;
+  window.setTrack = function (k) {
+    trk = k; store.set('avt_track', k); STEP = 60 / bpmOf(k) / 4;
+    if (!musicOn) { musicOn = startMusic(); } else { stp = 0; nextT = ctx.currentTime + 0.15; }
+    paint(); const m = $a('musicMenu'); if (m) { m.style.display = 'none'; }
+  };
+  window.toggleMusicMenu = function () {
+    const m = $a('musicMenu'); if (!m) return;
+    m.innerHTML = '<strong>🎼 Playlist (jazz · blues · R&B)</strong>' + TRACK_LIST.map(([k, n]) => `<button type="button" onclick="setTrack('${k}')" aria-pressed="${k === trk && musicOn}">${n}</button>`).join('') + (musicOn ? '<button type="button" onclick="toggleMusic(); toggleMusicMenu()">⏸️ Pause</button>' : '');
+    m.style.display = m.style.display === 'block' ? 'none' : 'block';
+  };
 
   function startMusic() {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -3437,7 +3631,7 @@ loadData();
       buildFx();
     }
     if (ctx.state === 'suspended') ctx.resume();
-    stp = 0; nextT = ctx.currentTime + 0.1;
+    STEP = 60 / bpmOf(trk) / 4; stp = 0; nextT = ctx.currentTime + 0.1;
     sched(); timer = setInterval(sched, 150);
     return true;
   }
