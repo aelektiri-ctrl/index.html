@@ -631,6 +631,30 @@ button:disabled { opacity: 0.6; cursor: wait; }
       </div>
     </section>
 
+    <section id="pitch" style="margin-bottom:26px;">
+      <h2 style="font-family:Georgia,serif; font-size:clamp(22px,3vw,30px); margin-bottom:6px;">Et si vos objets oubliés payaient vos envies ?</h2>
+      <p style="font-size:15px; color:var(--muted); max-width:640px; margin-bottom:16px;">À Vos Trocs, c'est la seconde main entre membres de la région : vous échangez <strong>sans dépenser un euro</strong>, ou vous vendez et vous complétez avec une petite soulte. Simple, local, équitable.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:18px;">
+        <div class="tool-box"><strong>🔁 100 % troc</strong><div style="font-size:13px; color:var(--muted); margin-top:4px;">Un espace où l'on n'échange que des objets, à valeur équitable. Zéro argent.</div></div>
+        <div class="tool-box"><strong>⚖️ Équitable</strong><div style="font-size:13px; color:var(--muted); margin-top:4px;">La communauté vote si un échange est juste. Fini les mauvaises surprises.</div></div>
+        <div class="tool-box"><strong>🤝 Soulte en euros</strong><div style="font-size:13px; color:var(--muted); margin-top:4px;">Votre objet vaut un peu moins ? Complétez avec la différence.</div></div>
+        <div class="tool-box"><strong>🛡️ Entre membres</strong><div style="font-size:13px; color:var(--muted); margin-top:4px;">Comptes obligatoires, annonces contrôlées, signalements et faux comptes bloqués.</div></div>
+      </div>
+      <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:16px; padding:18px;">
+        <strong style="font-size:15px;">💡 L'échange à trois : quand personne ne veut l'objet de l'autre</strong>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin:12px 0; font-size:14px;">
+          <div><strong>Léa</strong> a une <em>console</em> et veut un <em>vélo</em>.</div>
+          <div><strong>Marc</strong> a un <em>vélo</em> et veut une <em>guitare</em>.</div>
+          <div><strong>Sam</strong> a une <em>guitare</em> et veut une <em>console</em>.</div>
+        </div>
+        <p style="font-size:14px; margin:0;">Séparément, aucun échange à deux ne marche. À trois, <strong>chacun repart avec ce qu'il voulait</strong>. À Vos Trocs repère ces boucles pour vous et vous les propose dans <em>Mon Inventaire</em>.</p>
+      </div>
+      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-primary" onclick="openPostModal()">+ Déposer mon premier objet</button>
+        <span style="font-size:13px; color:var(--muted);">Gratuit. Les 100 premiers membres ont 10 photos par annonce.</span>
+      </div>
+    </section>
+
     <section id="sponsorBox" style="border:1px dashed var(--border); border-radius:16px; padding:18px; margin-bottom:24px; background:var(--surface-2);">
       <strong style="font-size:15px;">📣 Espace sponsors</strong>
       <p style="font-size:13px; color:var(--muted); margin:6px 0 12px;">Votre commerce ou service local ici, vu par tous les membres. Laissez vos coordonnées, on vous répond avec les tarifs.</p>
@@ -2114,6 +2138,31 @@ function findMatches() {
   return out.sort((a, b) => Number(b.both) - Number(a.both)).slice(0, 6);
 }
 
+function wantsItem(a, b) {
+  const words = tokens(b.title + ' ' + b.category);
+  return tokens(a.want).some(w => words.includes(w));
+}
+
+// Échange à trois : A veut l'objet de B, B veut l'objet de C, C veut l'objet de A.
+function findChains() {
+  const mine = listings.filter(isMine);
+  const others = listings.filter(x => !isMine(x));
+  const out = [], seen = new Set();
+  mine.forEach(a => {
+    others.forEach(b => {
+      if (!wantsItem(a, b)) return;
+      others.forEach(c => {
+        if (c.id === b.id || c.ownerId === b.ownerId) return;
+        if (wantsItem(b, c) && wantsItem(c, a)) {
+          const key = [a.id, b.id, c.id].join('>');
+          if (!seen.has(key)) { seen.add(key); out.push({ a: a, b: b, c: c }); }
+        }
+      });
+    });
+  });
+  return out.slice(0, 3);
+}
+
 function renderMatches() {
   const panel = $('matchPanel');
   if (!currentUser || !listings.some(isMine)) { panel.innerHTML = ''; return; }
@@ -2133,7 +2182,22 @@ function renderMatches() {
         </div>
       `).join('') : '<div class="match-row" style="color:var(--muted);">Aucune correspondance pour le moment. Elles apparaîtront ici dès qu\'une annonce sera compatible.</div>'}
     </div>
+    ${chainsHTML()}
   `;
+}
+
+function chainsHTML() {
+  const chains = findChains();
+  if (!chains.length) return '';
+  return `<div class="match-panel" style="margin-top:12px;">
+    <h3 style="font-size:15px; color:var(--green); margin-bottom:4px;">🔁 Échange à trois : chacun repart avec ce qu'il veut</h3>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">Personne ne veut exactement l'objet de l'autre, mais à trois, ça boucle. Contactez chacun des deux membres pour organiser la boucle.</p>
+    ${chains.map(c => `<div class="match-row"><div>
+      <div><strong>Vous</strong> donnez <strong>${esc(c.a.title)}</strong> à ${esc(c.c.owner)}</div>
+      <div>${esc(c.b.owner)} vous donne <strong>${esc(c.b.title)}</strong></div>
+      <div>${esc(c.c.owner)} donne <strong>${esc(c.c.title)}</strong> à ${esc(c.b.owner)}</div>
+    </div><button class="btn btn-outline" style="padding:6px 12px; font-size:12px;" onclick="openDetail('${esc(c.b.id)}')">Voir</button></div>`).join('')}
+  </div>`;
 }
 
 function openDeclic() { $('declicModal').showModal(); runDeclic(); }
