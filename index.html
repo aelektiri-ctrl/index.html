@@ -2897,6 +2897,26 @@ function setupInstall() {
   }
 }
 
+const APP_VERSION='2026-11-16-1';
+(function(){
+  async function checkVersion(){
+    try{
+      const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});
+      if(!r.ok) return;
+      const j=await r.json();
+      if(j.v && j.v!==APP_VERSION){
+        const k='avt_reloaded_'+j.v;
+        if(!sessionStorage.getItem(k)){
+          sessionStorage.setItem(k,'1');
+          try{ if('caches' in window){ (await caches.keys()).forEach(c=>caches.delete(c)); } }catch(e){}
+          location.reload();
+        }
+      }
+    }catch(e){}
+  }
+  checkVersion();
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) checkVersion(); });
+})();
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
