@@ -594,7 +594,32 @@ table.adm tr:last-child td { border-bottom: 0; }
 .install-bar[hidden] { display: none; }
 .install-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 button:disabled { opacity: 0.6; cursor: wait; }
-body{padding-bottom:58px;}
+
+/* ===== Barre agent + en-tête compact + accessibilité ===== */
+.ai-bar { position: relative; flex: 1 1 260px; min-width: 230px; max-width: 440px; }
+.ai-bar form { display: flex; align-items: center; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
+.ai-badge { flex: none; background: #f7d47c; color: #15120a; font-size: 10px; letter-spacing: .3px; padding: 4px 6px; border-radius: 7px; white-space: nowrap; }
+.ai-bar input { flex: 1; min-width: 0; height: 30px; border: 0; background: transparent; color: var(--ink); font-size: 16px; padding: 0 6px; outline: none; }
+.ai-bar button { flex: none; height: 30px; min-width: 30px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); cursor: pointer; font-size: 14px; }
+.ai-bar .ai-go { background: #f7d47c; color: #15120a; font-weight: 700; padding: 0 9px; }
+#aiMsgs { display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; max-height: 55vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.45); padding: 6px 10px; z-index: 1200; }
+@media (max-width: 760px) {
+  .topbar { gap: 8px; padding: 8px 12px; }
+  .topbar .spacer { display: none; }
+  .brand { order: 1; font-size: 20px; }
+  #accountBtn { order: 2; margin-left: auto; padding: 7px 12px; font-size: 13px; }
+  .ai-bar { order: 3; flex: 1 1 100%; max-width: none; }
+  .nav-tabs { order: 4; flex: 1 1 100%; }
+  .tb-act { order: 5; flex: 1 1 0; padding: 8px 6px; font-size: 13px; white-space: nowrap; }
+}
+:focus-visible { outline: 3px solid #f7d47c; outline-offset: 2px; }
+body.hc { --surface: #000; --surface-2: #0d0d0d; --ink: #fff; --muted: #f0f0f0; --border: #fff; }
+body.hc a { text-decoration: underline; }
+body.rm *, body.rm *::before, body.rm *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+#a11yMenu { display: none; position: fixed; left: 12px; bottom: 60px; z-index: 70; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 14px; padding: 12px; width: min(300px, calc(100vw - 24px)); box-shadow: 0 12px 32px rgba(0,0,0,.5); font-size: 14px; }
+#a11yMenu button { margin: 4px 4px 0 0; border: 1px solid var(--border); background: var(--surface-2); color: var(--ink); border-radius: 999px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
+#a11yMenu button[aria-pressed="true"] { background: #f7d47c; color: #15120a; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -613,10 +638,20 @@ body{padding-bottom:58px;}
       <button class="nav-tab" id="tab-admin" onclick="switchView('admin')">Administration</button>
     </nav>
     <div class="spacer"></div>
-    <button class="btn btn-outline" onclick="inviteFriends()">🎁 Inviter</button>
-    <button class="btn btn-outline" onclick="openInbox()">Messagerie (<span id="msgCount">0</span>)</button>
+    <div id="aiPanel" class="ai-bar" role="search" aria-label="Assistant À Vos Trocs">
+      <form onsubmit="assistantSend(); return false;">
+        <span class="ai-badge" title="Agent À Vos Trocs">🤖 <b>AGENT</b></span>
+        <input id="aiInput" autocomplete="off" aria-label="Demande à l'agent" placeholder="Que cherches-tu ?">
+        <button type="button" id="aiMic" onclick="assistantListen()" aria-label="Parler à l'agent">🎤</button>
+        <button type="submit" class="ai-go" aria-label="Envoyer">OK</button>
+        <button type="button" id="aiToggle" onclick="toggleAssistant()" aria-label="Afficher ou masquer les réponses">▾</button>
+      </form>
+      <div id="aiMsgs" aria-live="polite"></div>
+    </div>
+    <button class="btn btn-outline tb-act" onclick="inviteFriends()">🎁 Inviter</button>
+    <button class="btn btn-outline tb-act" onclick="openInbox()">✉️ Messages (<span id="msgCount">0</span>)</button>
     <button class="btn btn-outline" id="accountBtn" onclick="openAccount()">Se connecter</button>
-    <button class="btn btn-primary" onclick="openPostModal()">+ Déposer une annonce</button>
+    <button class="btn btn-primary tb-act" onclick="openPostModal()">+ Déposer</button>
   </div>
 </header>
 
@@ -644,7 +679,7 @@ body{padding-bottom:58px;}
         <div class="tool-box"><strong>🛡️ Entre membres</strong><div style="font-size:13px; color:var(--muted); margin-top:4px;">Comptes obligatoires, annonces contrôlées, signalements et faux comptes bloqués.</div></div>
       </div>
       <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:16px; padding:18px;">
-        <strong style="font-size:15px;">💡 L'échange à trois : quand personne ne veut l'objet de l'autre</strong>
+        <strong style="font-size:15px;">💡 L'échange à trois : quand personne ne veut l'objet de l'autre</strong> <button type="button" class="btn btn-outline" style="padding:4px 10px; font-size:12px; margin-left:6px;" onclick="avtRead('Exemple d\'échange à trois. Léa a une console et veut un vélo. Marc a un vélo et veut une guitare. Sam a une guitare et veut une console. Séparément, aucun échange à deux ne marche. À trois, chacun repart avec ce qu\'il voulait. À Vos Trocs repère ces boucles pour vous, et vous les propose dans Mon Inventaire.')" aria-label="Écouter l'explication">🔊 Écouter</button>
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin:12px 0; font-size:14px;">
           <div><strong>Léa</strong> a une <em>console</em> et veut un <em>vélo</em>.</div>
           <div><strong>Marc</strong> a un <em>vélo</em> et veut une <em>guitare</em>.</div>
@@ -1234,6 +1269,7 @@ function notify(msg) {
   document.querySelector('.toast')?.remove();
   const el = document.createElement('div');
   el.className = 'toast';
+  el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
   el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 4200);
@@ -1821,9 +1857,14 @@ function buildCardHTML(item) {
 }
 
 let recog = null;
+function micHelp() {
+  const ua = navigator.userAgent || '';
+  if (/FBAN|FBAV|Instagram|Messenger|Line\/|Snapchat|TikTok/i.test(ua)) return "Tu es dans le navigateur d'une autre appli : ouvre le site dans Chrome (menu ⋮ → Ouvrir dans le navigateur) pour utiliser le micro. Sinon, touche le champ et utilise le micro de ton clavier.";
+  return "Le micro intégré n'est pas disponible ici. Touche le champ de texte et utilise le micro 🎤 de ton clavier : ça marche partout.";
+}
 function voiceSearch() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { notify("La recherche vocale n'est pas disponible sur ce navigateur. Essayez avec Chrome."); return; }
+  if (!SR) { notify(micHelp()); try { $('searchQuery').focus(); } catch {} return; }
   const btn = $('micBtn');
   if (recog) { try { recog.stop(); } catch {} return; }
   recog = new SR();
@@ -1839,7 +1880,7 @@ function voiceSearch() {
     notify('Recherche : « ' + t + ' »');
   };
   recog.onerror = e => {
-    notify(e.error === 'not-allowed' ? 'Autorisez le micro pour utiliser la recherche vocale.' : "Je n'ai pas bien entendu, réessayez.");
+    notify(/not-allowed|service-not-allowed/.test(e.error) ? 'Autorise le micro dans les réglages du navigateur (cadenas à côté de l\'adresse), ou utilise le micro de ton clavier.' : e.error === 'no-speech' ? "Je n'ai rien entendu, réessaie." : e.error === 'network' ? 'Pas de connexion pour la reconnaissance vocale. Utilise le micro de ton clavier.' : "Je n'ai pas bien entendu, réessaie.");
   };
   recog.onend = () => { btn.textContent = '🎤'; recog = null; };
   try { recog.start(); notify('Je vous écoute… dites par exemple « vélo » ou « console de jeux ».'); } catch { btn.textContent = '🎤'; recog = null; }
@@ -2115,6 +2156,10 @@ function toggleFav(id) {
   renderCurrentView();
 }
 
+function readItem(id) {
+  const x = listings.find(l => l.id === id); if (!x) return '';
+  return `${x.title}. ${Number(x.price) === 0 ? 'À donner gratuitement' : x.price + ' euros'}. État : ${x.condition}. À ${x.city}, proposé par ${x.owner}. ${x.description}. Conditions : ${x.want}.`;
+}
 function openDetail(id) {
   currentItem = listings.find(x => x.id === id);
   if (!currentItem) return;
@@ -2139,6 +2184,7 @@ function openDetail(id) {
         : `<button class="btn btn-primary" style="flex:1;" onclick="$('detailModal').close(); openOfferModal()">${x.mode === 'VENTE' ? 'Acheter ou faire une offre' : x.mode === 'TROC' ? 'Proposer un échange' : 'Proposer un échange / soulte'}</button>`}
     </div>
     <div style="display:flex; gap:10px; margin-top:10px;">
+      <button class="btn btn-outline" style="flex:1; padding:8px; font-size:13px;" onclick="avtRead(readItem('${esc(x.id)}'))">🔊 Écouter</button>
       <button class="btn btn-outline" style="flex:1; padding:8px; font-size:13px;" onclick="shareItem('${esc(x.id)}')">Partager</button>
       <button class="btn btn-outline" style="flex:1; padding:8px; font-size:13px;" onclick="reportItem('${esc(x.id)}')">Signaler</button>
     </div>
@@ -2712,7 +2758,7 @@ function chainsHTML() {
   const chains = findChains();
   if (!chains.length) return '';
   return `<div class="match-panel" style="margin-top:12px;">
-    <h3 style="font-size:15px; color:var(--green); margin-bottom:4px;">🔁 Échange à trois : chacun repart avec ce qu'il veut</h3>
+    <h3 style="font-size:15px; color:var(--green); margin-bottom:4px;">🔁 Échange à trois : chacun repart avec ce qu'il veut <button type="button" class="btn btn-outline" style="padding:4px 10px; font-size:12px;" onclick="avtReadNode(this.closest('.match-panel'))" aria-label="Écouter">🔊</button></h3>
     <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">Personne ne veut exactement l'objet de l'autre, mais à trois, ça boucle. Contactez chacun des deux membres pour organiser la boucle.</p>
     ${chains.map(c => `<div class="match-row"><div>
       <div><strong>Vous</strong> donnez <strong>${esc(c.a.title)}</strong> à ${esc(c.c.owner)}</div>
@@ -3077,7 +3123,7 @@ function setupInstall() {
   }
 }
 
-const APP_VERSION='2026-11-16-6';
+const APP_VERSION='2026-11-16-8';
 (function(){
   async function checkVersion(){
     try{
@@ -3109,19 +3155,20 @@ loadData();
 </script>
 
 <!-- Ambiance : voix de bienvenue et musique douce (facultatives) -->
-<div id="aiPanel" style="position:fixed; left:0; right:0; bottom:0; z-index:60; display:flex; flex-direction:column; background:var(--surface,#161b1a); color:var(--ink,#fff); border-top:1px solid var(--border,#333); box-shadow:0 -6px 24px rgba(0,0,0,.35); padding-bottom:env(safe-area-inset-bottom);">
-  <div id="aiMsgs" style="display:none; overflow-y:auto; max-height:34vh; padding:6px 12px;"></div>
-  <form onsubmit="assistantSend(); return false;" style="display:flex; align-items:center; gap:6px; padding:6px 8px;">
-    <span title="Agent À Vos Trocs" style="flex:none; display:inline-flex; align-items:center; gap:4px; background:#f7d47c; color:#15120a; font-weight:800; font-size:11px; letter-spacing:.3px; padding:4px 7px; border-radius:7px;">🤖 AGENT</span>
-    <input id="aiInput" autocomplete="off" placeholder="Que cherches-tu ? (ex : vélo au Havre)" style="flex:1; min-width:0; height:34px; border-radius:8px; border:1px solid var(--border,#333); background:var(--surface-2,#222); color:inherit; padding:0 10px; font-size:16px;">
-    <button type="button" id="aiMic" onclick="assistantListen()" aria-label="Parler" style="flex:none; width:34px; height:34px; border-radius:8px; border:0; background:var(--surface-2,#222); color:inherit; font-size:15px; cursor:pointer;">🎤</button>
-    <button type="submit" aria-label="Envoyer" style="flex:none; height:34px; border:0; border-radius:8px; background:#f7d47c; color:#15120a; font-weight:700; padding:0 11px; cursor:pointer;">OK</button>
-    <button type="button" id="aiToggle" onclick="toggleAssistant()" aria-label="Afficher ou masquer les réponses" style="flex:none; width:30px; height:34px; border:0; background:transparent; color:inherit; font-size:16px; cursor:pointer;">▾</button>
-  </form>
+<div id="a11yMenu" role="dialog" aria-label="Options d'accessibilité">
+  <strong>♿ Accessibilité</strong>
+  <div style="margin-top:6px;">Taille du texte</div>
+  <button type="button" data-fs="0" onclick="a11yFs(0)">A</button><button type="button" data-fs="1" onclick="a11yFs(1)" style="font-size:16px;">A+</button><button type="button" data-fs="2" onclick="a11yFs(2)" style="font-size:19px;">A++</button>
+  <div style="margin-top:8px;"></div>
+  <button type="button" id="a11yHc" onclick="a11yToggle('hc')">Contraste élevé</button>
+  <button type="button" id="a11yRm" onclick="a11yToggle('rm')">Moins d'animations</button>
+  <button type="button" id="a11yRa" onclick="a11yToggle('ra')">🔊 Tout lire à voix haute</button>
+  <p style="font-size:12px; margin:8px 0 0; opacity:.85;">Chaque annonce a un bouton « 🔊 Écouter ». Les messages du site sont lus si « Tout lire » est activé.</p>
 </div>
-<div id="soundDock" style="position:fixed; left:12px; bottom:64px; z-index:50; display:flex; gap:8px;">
+<div id="soundDock" style="position:fixed; left:12px; bottom:12px; z-index:50; display:flex; gap:8px;">
   <button id="musicBtn" type="button" onclick="toggleMusic()" aria-pressed="false" title="Musique d'ambiance" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🎵 Musique</button>
   <button id="voiceBtn" type="button" onclick="toggleVoice()" aria-pressed="true" title="Voix de bienvenue" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🔊 Voix</button>
+  <button id="a11yBtn" type="button" onclick="toggleA11y()" aria-label="Accessibilité" title="Accessibilité" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">♿ Accès</button>
 </div>
 <script>
 /* ===== Voix, musique d'ambiance et assistant (tout est généré dans le navigateur, gratuit, sans droit d'auteur) ===== */
@@ -3385,13 +3432,20 @@ loadData();
   };
   window.assistantListen = function () {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { addMsg('Le micro n\'est pas disponible sur ce navigateur, écris-moi ta demande.', 'bot'); return; }
+    showMsgs(true);
+    if (!SR) { addMsg(esc(micHelp()), 'bot'); try { $a('aiInput').focus(); } catch {} return; }
     const r = new SR(); r.lang = 'fr-FR'; r.interimResults = false;
     $a('aiMic').textContent = '🔴';
     r.onresult = e => { $a('aiInput').value = e.results[0][0].transcript; assistantSend(); };
-    r.onerror = () => addMsg('Je n\'ai pas bien entendu, réessaie !', 'bot');
+    r.onerror = e => {
+      const m = /not-allowed|service-not-allowed/.test(e.error) ? 'Autorise le micro dans les réglages du navigateur (cadenas à côté de l\'adresse), ou utilise le micro de ton clavier.'
+        : e.error === 'no-speech' ? 'Je n\'ai rien entendu, réessaie !'
+        : e.error === 'network' ? 'Pas de connexion pour la reconnaissance vocale. Utilise le micro de ton clavier.'
+        : 'Je n\'ai pas bien entendu, réessaie !';
+      addMsg(esc(m), 'bot'); showMsgs(true);
+    };
     r.onend = () => { $a('aiMic').textContent = '🎤'; };
-    try { r.start(); } catch { $a('aiMic').textContent = '🎤'; }
+    try { r.start(); } catch { $a('aiMic').textContent = '🎤'; addMsg(esc(micHelp()), 'bot'); }
   };
   window.assistantSend = function () {
     const inp = $a('aiInput'); const q = inp.value.trim(); if (!q) return;
@@ -3457,11 +3511,34 @@ loadData();
     try { $a('searchQuery').value = tokens.join(' '); } catch {}
   }
 
+
+  /* ---------- Accessibilité ---------- */
+  function force(text) {
+    try {
+      if (!('speechSynthesis' in window)) return;
+      speechSynthesis.cancel();
+      const v = bestVoice();
+      (String(text).match(/[^.!?]+[.!?]*/g) || [text]).forEach(p => { const u = new SpeechSynthesisUtterance(p.trim()); u.lang = 'fr-FR'; u.rate = 0.98; if (v) u.voice = v; speechSynthesis.speak(u); });
+    } catch {}
+  }
+  window.avtRead = function (t) { if (t) force(t); };
+  window.avtReadNode = function (n) { if (n) force(n.innerText.replace(/🔊/g, '')); };
+  const A = { fs: Number(store.get('avt_fs', '0')) || 0, hc: store.get('avt_hc', '0') === '1', rm: store.get('avt_rm', '0') === '1', ra: store.get('avt_ra', '0') === '1' };
+  function a11yApply() {
+    document.body.style.zoom = [1, 1.15, 1.3][A.fs] || 1;
+    document.body.classList.toggle('hc', A.hc);
+    document.body.classList.toggle('rm', A.rm);
+    document.querySelectorAll('#a11yMenu [data-fs]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.fs) === A.fs)));
+    [['a11yHc', 'hc'], ['a11yRm', 'rm'], ['a11yRa', 'ra']].forEach(([id, k]) => { const b = $a(id); if (b) b.setAttribute('aria-pressed', String(A[k])); });
+  }
+  window.a11yFs = function (n) { A.fs = n; store.set('avt_fs', String(n)); a11yApply(); };
+  window.a11yToggle = function (k) { A[k] = !A[k]; store.set('avt_' + k, A[k] ? '1' : '0'); a11yApply(); if (k === 'ra' && A.ra) force('Lecture à voix haute activée.'); };
+  window.toggleA11y = function () { const m = $a('a11yMenu'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; };
   try {
-    const pn = document.getElementById('aiPanel'), dk = document.getElementById('soundDock');
-    const fit = () => { if (pn && dk) dk.style.bottom = (pn.offsetHeight + 8) + 'px'; };
-    new ResizeObserver(fit).observe(pn); fit();
+    const n0 = window.notify;
+    window.notify = function (m) { n0(m); if (A.ra) force(m); };
   } catch {}
+  a11yApply();
   paint();
 })();
 </script>
