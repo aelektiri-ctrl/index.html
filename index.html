@@ -630,6 +630,7 @@ body.rm *, body.rm *::before, body.rm *::after { animation: none !important; tra
     <nav class="nav-tabs">
       <button class="nav-tab active" id="tab-market" onclick="switchView('market')">Accueil</button>
       <button class="nav-tab" id="tab-swipe" onclick="switchView('swipe')">🔥 Découvrir</button>
+      <button class="nav-tab" id="tab-enfants" onclick="switchView('enfants')">🧸 Enfants</button>
       <button class="nav-tab" id="tab-services" onclick="switchView('services')">🛠️ Services</button>
       <button class="nav-tab" id="tab-troc" onclick="switchView('troc')">Échange 100 % troc</button>
       <button class="nav-tab" id="tab-argent" onclick="switchView('argent')">Vente & soulte (€)</button>
@@ -738,9 +739,10 @@ body.rm *, body.rm *::before, body.rm *::after { animation: none !important; tra
     <div class="search-panel">
       <div class="search-row">
         <div style="position:relative;">
-          <input class="search-input" id="searchQuery" placeholder="Rechercher un article, une marque, un modèle..." oninput="renderListings()" style="padding-right:48px;">
+          <input class="search-input" id="searchQuery" placeholder="Rechercher un article, une marque, un modèle..." oninput="renderListings()" onchange="addHist(this.value)" style="padding-right:48px;">
           <button type="button" id="micBtn" onclick="voiceSearch()" aria-label="Recherche vocale" title="Recherche vocale" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); width:36px; height:36px; border-radius:50%; border:0; background:var(--surface-2); color:var(--ink); font-size:17px; cursor:pointer;">🎤</button>
         </div>
+        <div id="searchHist" style="display:flex; gap:6px; flex-wrap:wrap; margin:0 0 8px;"></div>
         <input class="search-input" id="searchCity" placeholder="Ville ou code postal (ex: Le Havre, Rouen...)" oninput="renderListings()">
         <select class="search-select" id="filterMode" onchange="renderListings()">
           <option value="ALL">Tous les modes</option>
@@ -781,6 +783,19 @@ body.rm *, body.rm *::before, body.rm *::after { animation: none !important; tra
   <div id="view-swipe" class="view">
     <div class="section-header"><div><h2>Découvrir</h2><p style="font-size:13px; color:var(--muted);">Glissez à droite pour garder une annonce en favori, à gauche pour passer. Touchez la carte pour la voir en détail.</p></div></div>
     <div id="swipeArea" style="max-width:420px; margin:0 auto;"></div>
+  </div>
+
+  <div id="view-enfants" class="view">
+    <div class="section-header">
+      <div>
+        <h2>🧸 Espace Enfants · spécial Noël 🎄</h2>
+        <p style="font-size:13px; color:var(--muted);">Les jouets et jeux de l'an dernier deviennent les cadeaux de cette année : échangez entre parents, sans dépenser un euro.</p>
+      </div>
+      <button class="btn btn-primary" onclick="openPostModal('TROC'); document.querySelector('#postForm [name=category]').value='Enfants & Jouets'">+ Déposer un jouet</button>
+    </div>
+    <div class="hint" style="margin:0 0 12px;">💡 Indique l'âge de l'enfant dans le titre (ex : « Lego City 6-9 ans ») et ce que tu cherches en échange. Vérifie que le jouet est complet et propre, et évite les jouets cassés ou rappelés.</div>
+    <div id="kidChips" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;"></div>
+    <div class="listings-grid" id="enfantsGrid"></div>
   </div>
 
   <div id="view-services" class="view">
@@ -906,6 +921,7 @@ body.rm *, body.rm *::before, body.rm *::after { animation: none !important; tra
           <option>Outillage & Bricolage</option>
           <option>Photo, Audio & Gaming</option>
           <option>Mode & Horlogerie</option>
+          <option>Enfants & Jouets</option>
         </select>
       </div>
       <div class="form-group">
@@ -1222,6 +1238,7 @@ const CATEGORIES = [
   'Photo, Audio & Gaming',
   'Outillage & Bricolage',
   'Mode & Horlogerie',
+  'Enfants & Jouets',
   'Favoris'
 ];
 
@@ -1775,6 +1792,7 @@ function renderCurrentView() {
   if (view === 'market') renderListings();
   if (view === 'swipe') renderSwipe();
   if (view === 'services') renderServices();
+  if (view === 'enfants') renderKids();
   if (view === 'troc') renderFilteredGrid('TROC', 'trocGrid');
   if (view === 'argent') { renderFilteredGrid('HYBRIDE', 'hybrideGrid'); renderFilteredGrid('VENTE', 'occasionGrid'); }
   if (view === 'votes') renderVotes();
@@ -1857,35 +1875,27 @@ function buildCardHTML(item) {
 }
 
 let recog = null;
-function micHelp() {
-  const ua = navigator.userAgent || '';
-  if (/FBAN|FBAV|Instagram|Messenger|Line\/|Snapchat|TikTok/i.test(ua)) return "Tu es dans le navigateur d'une autre appli : ouvre le site dans Chrome (menu ⋮ → Ouvrir dans le navigateur) pour utiliser le micro. Sinon, touche le champ et utilise le micro de ton clavier.";
-  return "Le micro intégré n'est pas disponible ici. Touche le champ de texte et utilise le micro 🎤 de ton clavier : ça marche partout.";
-}
+function micHelp() { return "Touche le champ de texte et utilise le micro 🎤 de ton clavier, ou autorise le micro pour l'appli dans les réglages Android."; }
 function voiceSearch() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { notify(micHelp()); try { $('searchQuery').focus(); } catch {} return; }
-  const btn = $('micBtn');
-  if (recog) { try { recog.stop(); } catch {} return; }
-  recog = new SR();
-  recog.lang = 'fr-FR';
-  recog.interimResults = false;
-  recog.maxAlternatives = 1;
-  btn.textContent = '🔴';
-  recog.onresult = e => {
-    const t = (e.results[0][0].transcript || '').replace(/[.!?]+$/, '').trim();
-    $('searchQuery').value = t;
-    switchView('market');
-    renderListings();
-    notify('Recherche : « ' + t + ' »');
-  };
-  recog.onerror = e => {
-    notify(/not-allowed|service-not-allowed/.test(e.error) ? 'Autorise le micro dans les réglages du navigateur (cadenas à côté de l\'adresse), ou utilise le micro de ton clavier.' : e.error === 'no-speech' ? "Je n'ai rien entendu, réessaie." : e.error === 'network' ? 'Pas de connexion pour la reconnaissance vocale. Utilise le micro de ton clavier.' : "Je n'ai pas bien entendu, réessaie.");
-  };
-  recog.onend = () => { btn.textContent = '🎤'; recog = null; };
-  try { recog.start(); notify('Je vous écoute… dites par exemple « vélo » ou « console de jeux ».'); } catch { btn.textContent = '🎤'; recog = null; }
+  avtDictate(t => {
+    t = t.replace(/[.!?]+$/, '').trim();
+    $('searchQuery').value = t; addHist(t);
+    switchView('market'); renderListings(); notify('Recherche : « ' + t + ' »');
+  }, m => notify(m), $('micBtn'));
 }
 
+
+
+/* ===== Espace Enfants ===== */
+let kidTheme = '';
+const KID_THEMES = [['', 'Tout'], ['lego construction playmobil', '🧱 Construction'], ['poupee peluche', '🧸 Poupées & peluches'], ['societe puzzle cartes', '🎲 Jeux de société'], ['console switch ps5 ps4 xbox jeu video', '🎮 Jeux vidéo'], ['livre bd album', '📚 Livres'], ['velo trottinette draisienne patin', '🚲 Vélos & trottinettes'], ['vetement manteau combinaison', '👕 Vêtements'], ['poussette lit bebe', '🍼 Bébé']];
+function renderKids() {
+  $('kidChips').innerHTML = KID_THEMES.map(([k, l]) => `<button type="button" class="chip ${kidTheme === k ? 'active' : ''}" onclick="kidTheme='${k}'; renderKids()">${l}</button>`).join('');
+  const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const words = kidTheme.split(' ').filter(Boolean);
+  const list = listings.filter(x => x.category === 'Enfants & Jouets' && (!words.length || words.some(w => norm([x.title, x.description].join(' ')).includes(w))));
+  $('enfantsGrid').innerHTML = list.length ? list.map(buildCardHTML).join('') : stateBox("Aucun jouet pour le moment. Sois le premier à publier ceux de l'an dernier ! 🎄");
+}
 
 /* ===== Services & coups de main ===== */
 const SERVICE_FEE = 2.99;
@@ -1989,6 +1999,21 @@ async function answerContact(id, status) {
   try { await db('service_contacts?id=eq.' + encodeURIComponent(id), { method: 'PATCH', body: { status } }); notify(status === 'Acceptée' ? 'Demande acceptée ✅' : 'Demande refusée.'); await loadData(); } catch (x) { notify(x.message); }
 }
 
+
+/* ===== Historique de recherche ===== */
+let searchHist = loadLocal('avt_hist', []);
+function addHist(t) {
+  t = String(t || '').trim().toLowerCase();
+  if (t.length < 3) return;
+  searchHist = [t].concat(searchHist.filter(x => x !== t)).slice(0, 8);
+  saveLocal('avt_hist', searchHist); renderHist();
+}
+function renderHist() {
+  const el = $('searchHist'); if (!el) return;
+  el.innerHTML = searchHist.length ? '<span style="font-size:12px; color:var(--muted); align-self:center;">🕘 Déjà cherché :</span>' + searchHist.slice(0, 5).map(t => `<button type="button" class="chip" onclick="useHist(this.dataset.t)" data-t="${esc(t)}">${esc(t)}</button>`).join('') : '';
+}
+function useHist(t) { $('searchQuery').value = t; renderListings(); }
+
 /* ===== Recherche par distance ===== */
 let geoCache = loadLocal('avt_geo', {});
 let geoPending = {};
@@ -2033,7 +2058,7 @@ function searchCenter() {
 }
 
 function renderListings() {
-  renderChips();
+  renderChips(); renderHist();
   const q = $('searchQuery').value.toLowerCase().trim();
   const city = $('searchCity').value.toLowerCase().trim();
   const mode = $('filterMode').value;
@@ -3123,7 +3148,7 @@ function setupInstall() {
   }
 }
 
-const APP_VERSION='2026-11-16-8';
+const APP_VERSION='2026-11-16-9';
 (function(){
   async function checkVersion(){
     try{
@@ -3157,13 +3182,14 @@ loadData();
 <!-- Ambiance : voix de bienvenue et musique douce (facultatives) -->
 <div id="a11yMenu" role="dialog" aria-label="Options d'accessibilité">
   <strong>♿ Accessibilité</strong>
-  <div style="margin-top:6px;">Taille du texte</div>
-  <button type="button" data-fs="0" onclick="a11yFs(0)">A</button><button type="button" data-fs="1" onclick="a11yFs(1)" style="font-size:16px;">A+</button><button type="button" data-fs="2" onclick="a11yFs(2)" style="font-size:19px;">A++</button>
-  <div style="margin-top:8px;"></div>
-  <button type="button" id="a11yHc" onclick="a11yToggle('hc')">Contraste élevé</button>
-  <button type="button" id="a11yRm" onclick="a11yToggle('rm')">Moins d'animations</button>
-  <button type="button" id="a11yRa" onclick="a11yToggle('ra')">🔊 Tout lire à voix haute</button>
-  <p style="font-size:12px; margin:8px 0 0; opacity:.85;">Chaque annonce a un bouton « 🔊 Écouter ». Les messages du site sont lus si « Tout lire » est activé.</p>
+  <button type="button" id="readBtn" onclick="readPage()" style="width:100%; margin:8px 0 0; background:#f7d47c; color:#15120a; font-weight:700;">📖 Lire la page à voix haute</button>
+  <div style="margin-top:8px;">Taille du texte</div>
+  <button type="button" data-fs="0" onclick="a11yFs(0)">🔤 Normal</button><button type="button" data-fs="1" onclick="a11yFs(1)">🔍 Grand</button><button type="button" data-fs="2" onclick="a11yFs(2)">🔎 Très grand</button>
+  <div style="margin-top:8px;">Confort</div>
+  <button type="button" id="a11yHc" onclick="a11yToggle('hc')">🌓 Contraste fort</button>
+  <button type="button" id="a11yRm" onclick="a11yToggle('rm')">🍃 Écran calme</button>
+  <button type="button" id="a11yRa" onclick="a11yToggle('ra')">🔊 Tout lire</button>
+  <p style="font-size:12px; margin:8px 0 0; opacity:.85;">« Tout lire » lit aussi les messages du site. Chaque annonce a son bouton 🔊.</p>
 </div>
 <div id="soundDock" style="position:fixed; left:12px; bottom:12px; z-index:50; display:flex; gap:8px;">
   <button id="musicBtn" type="button" onclick="toggleMusic()" aria-pressed="false" title="Musique d'ambiance" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🎵 Musique</button>
@@ -3207,20 +3233,51 @@ loadData();
   }
   try { speechSynthesis.onvoiceschanged = () => {}; speechSynthesis.getVoices(); } catch {}
 
-  function speak(text) {
+  let ttsOK = null, ttsFailAt = 0, playTok = 0, curAudio = null;
+  function stopAll() { playTok++; try { if (curAudio) curAudio.pause(); } catch {} curAudio = null; try { speechSynthesis.cancel(); } catch {} }
+  function chunksOf(text, max) {
+    const sent = String(text).replace(/\s+/g, ' ').match(/[^.!?]+[.!?]*/g) || [String(text)];
+    const out = []; let cur = '';
+    sent.forEach(x => { x = x.trim(); if (!x) return; if ((cur + ' ' + x).length > max && cur) { out.push(cur); cur = x; } else cur = (cur ? cur + ' ' : '') + x; });
+    if (cur) out.push(cur);
+    return out.map(c => c.slice(0, 650));
+  }
+  async function fetchTTS(t) {
+    const r = await fetch(SUPABASE_URL + '/functions/v1/voice', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY }, body: JSON.stringify({ action: 'tts', text: t }) });
+    if (!r.ok) throw new Error('tts');
+    const j = await r.json(); if (!j.audio) throw new Error('tts');
+    return 'data:audio/mpeg;base64,' + j.audio;
+  }
+  function playSrc(src, tok) {
+    return new Promise((res, rej) => {
+      if (tok !== playTok) return res();
+      const a = new Audio(src); curAudio = a;
+      a.onended = () => res(); a.onerror = () => rej(new Error('play'));
+      a.play().catch(rej);
+    });
+  }
+  async function speakRemote(text) {
+    const tok = ++playTok; const parts = chunksOf(text, 450);
+    let next = fetchTTS(parts[0]);
+    for (let i = 0; i < parts.length; i++) {
+      const src = await next; if (tok !== playTok) return;
+      if (i + 1 < parts.length) { next = fetchTTS(parts[i + 1]); next.catch(() => {}); }
+      await playSrc(src, tok);
+    }
+  }
+  function speakLocal(text) {
     try {
       if (!('speechSynthesis' in window)) return;
       speechSynthesis.cancel();
-      // on découpe en phrases : le rythme est plus vivant et la voix reste fluide
-      const parts = String(text).match(/[^.!?]+[.!?]*/g) || [text];
       const v = bestVoice();
-      parts.forEach((p, i) => {
-        const u = new SpeechSynthesisUtterance(p.trim());
-        u.lang = 'fr-FR'; u.rate = 1; u.pitch = 1; u.volume = 1;
-        if (v) u.voice = v;
-        speechSynthesis.speak(u);
-      });
+      chunksOf(text, 220).forEach(p => { const u = new SpeechSynthesisUtterance(p); u.lang = 'fr-FR'; u.rate = 1.1; u.pitch = 1; u.volume = 1; if (v) u.voice = v; speechSynthesis.speak(u); });
     } catch {}
+  }
+  function speak(text) {
+    stopAll();
+    if (ttsOK === false && Date.now() - ttsFailAt > 10 * 60 * 1000) ttsOK = null;
+    if (ttsOK === false) return speakLocal(text);
+    speakRemote(text).then(() => { ttsOK = true; }).catch(() => { if (ttsOK !== true) { ttsOK = false; ttsFailAt = Date.now(); } speakLocal(text); });
   }
   window.avtSpeak = function (t) { if (voiceOn) speak(t); };
 
@@ -3242,6 +3299,7 @@ loadData();
       : hi + ' Bienvenue sur À Vos Trocs ! Qu\'est-ce que je peux faire pour toi aujourd\'hui ? Dis-moi ce que tu cherches, objet, ville, budget, et je te trouve ça !';
     if (voiceOn) speak(txt);
     openAssistant(txt);
+    try { if (searchHist.length) addMsg('🕘 Tes dernières recherches : ' + searchHist.slice(0, 4).map(t => '<a href="#" onclick="assistantRun(this.dataset.t); return false;" data-t="' + esc(t) + '" style="color:inherit; font-weight:700; text-decoration:underline; margin-right:8px;">' + esc(t) + '</a>').join(''), 'bot'); } catch {}
   }
   function welcome() {
     if (welcomed) return;
@@ -3251,7 +3309,7 @@ loadData();
   }
   addEventListener('pointerdown', welcome, true);
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { leftAt = Date.now(); try { speechSynthesis.cancel(); } catch {} return; }
+    if (document.hidden) { leftAt = Date.now(); try { stopAll(); } catch {} return; }
     if (leftAt && Date.now() - leftAt > 20 * 60 * 1000) { leftAt = 0; welcomed = false; addEventListener('pointerdown', welcome, true); }
   });
 
@@ -3393,6 +3451,45 @@ loadData();
     if (document.hidden) ctx.suspend(); else { ctx.resume(); nextT = ctx.currentTime + 0.1; }
   });
 
+
+  /* ---------- Dictée (micro) ---------- */
+  const dict = { stop: null };
+  window.avtDictate = function (cb, fail, btn) {
+    const setB = t => { if (btn) btn.textContent = t; };
+    if (dict.stop) { try { dict.stop(); } catch {} return; }
+    const MSG = "Le micro n'a pas pu démarrer. Autorise-le pour l'appli (Réglages Android → Applis → À Vos Trocs → Autorisations), ou dicte avec le micro de ton clavier.";
+    const done = () => { dict.stop = null; setB('🎤'); };
+    const viaRec = async () => {
+      try {
+        if (!navigator.mediaDevices || !window.MediaRecorder) throw 0;
+        const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mime = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus'].find(m => MediaRecorder.isTypeSupported(m));
+        if (!mime) { st.getTracks().forEach(t => t.stop()); throw 0; }
+        const mr = new MediaRecorder(st, { mimeType: mime }); const ch = [];
+        mr.ondataavailable = e => { if (e.data && e.data.size) ch.push(e.data); };
+        mr.onstop = async () => {
+          st.getTracks().forEach(t => t.stop()); done();
+          try {
+            const blob = new Blob(ch, { type: mime });
+            const b64 = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = rej; fr.readAsDataURL(blob); });
+            const r = await fetch(SUPABASE_URL + '/functions/v1/voice', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY }, body: JSON.stringify({ action: 'stt', audio: b64, mime }) });
+            const j = r.ok ? await r.json() : null;
+            if (j && j.text) cb(j.text); else fail("Je n'ai pas compris, réessaie en parlant un peu plus près.");
+          } catch { fail(MSG); }
+        };
+        mr.start(); setB('🔴'); dict.stop = () => { if (mr.state === 'recording') mr.stop(); };
+        setTimeout(() => { if (mr.state === 'recording') mr.stop(); }, 8000);
+      } catch { done(); fail(MSG); }
+    };
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { viaRec(); return; }
+    const r = new SR(); r.lang = 'fr-FR'; r.interimResults = false; let got = false, fell = false;
+    r.onresult = e => { got = true; cb(e.results[0][0].transcript); };
+    r.onerror = e => { if (e.error === 'no-speech') { fail("Je n'ai rien entendu, réessaie !"); } else if (!got) { fell = true; done(); viaRec(); } };
+    r.onend = () => { if (!fell) done(); };
+    try { r.start(); setB('🔴'); dict.stop = () => r.stop(); } catch { viaRec(); }
+  };
+
   /* ---------- Assistant : cherche dans les annonces, répond aux questions ---------- */
   const $a = id => document.getElementById(id);
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9€ ]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -3403,6 +3500,7 @@ loadData();
     'Maison & Ameublement': 'canape meuble table chaise lit armoire deco decoration lampe frigo lave electromenager cuisine matelas',
     'Photo, Audio & Gaming': 'console ps5 ps4 ps3 xbox switch nintendo jeu jeux manette appareil photo camera enceinte guitare piano micro gaming reflex canon nikon sony',
     'Outillage & Bricolage': 'perceuse outil outils visseuse scie tondeuse bricolage meuleuse jardin',
+    'Enfants & Jouets': 'jouet jouets lego playmobil poupee peluche puzzle enfant enfants bebe poussette noel doudou barbie',
     'Mode & Horlogerie': 'montre sac chaussures veste robe vetement vetements baskets bijou bijoux manteau'
   };
   function catsFor(tokens) {
@@ -3431,27 +3529,15 @@ loadData();
     showMsgs(m.style.display === 'none');
   };
   window.assistantListen = function () {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     showMsgs(true);
-    if (!SR) { addMsg(esc(micHelp()), 'bot'); try { $a('aiInput').focus(); } catch {} return; }
-    const r = new SR(); r.lang = 'fr-FR'; r.interimResults = false;
-    $a('aiMic').textContent = '🔴';
-    r.onresult = e => { $a('aiInput').value = e.results[0][0].transcript; assistantSend(); };
-    r.onerror = e => {
-      const m = /not-allowed|service-not-allowed/.test(e.error) ? 'Autorise le micro dans les réglages du navigateur (cadenas à côté de l\'adresse), ou utilise le micro de ton clavier.'
-        : e.error === 'no-speech' ? 'Je n\'ai rien entendu, réessaie !'
-        : e.error === 'network' ? 'Pas de connexion pour la reconnaissance vocale. Utilise le micro de ton clavier.'
-        : 'Je n\'ai pas bien entendu, réessaie !';
-      addMsg(esc(m), 'bot'); showMsgs(true);
-    };
-    r.onend = () => { $a('aiMic').textContent = '🎤'; };
-    try { r.start(); } catch { $a('aiMic').textContent = '🎤'; addMsg(esc(micHelp()), 'bot'); }
+    avtDictate(t => { $a('aiInput').value = t; assistantSend(); }, m => { addMsg(esc(m), 'bot'); showMsgs(true); }, $a('aiMic'));
   };
   window.assistantSend = function () {
     const inp = $a('aiInput'); const q = inp.value.trim(); if (!q) return;
     inp.value = ''; addMsg(esc(q), 'me'); showMsgs(true);
     setTimeout(() => answer(q), 250);
   };
+  window.assistantRun = function (t) { $a('aiInput').value = t; assistantSend(); };
   window.assistantOpen = function (id) { try { switchView('market'); openDetail(id); } catch {} };
   window.assistantRadar = function (k) { try { openRadar(); $a('radarKey').value = k; } catch {} };
 
@@ -3508,19 +3594,12 @@ loadData();
     const nb = res.length;
     reply('J\'ai trouvé <b>' + nb + ' annonce' + (nb > 1 ? 's' : '') + '</b> ! 🎉' + cards + (nb > 4 ? '<div style="margin-top:8px;font-size:12px;opacity:.8;">Il y en a d\'autres sur l\'accueil.</div>' : ''),
       'J\'ai trouvé ' + nb + (nb > 1 ? ' annonces' : ' annonce') + ' pour toi. Regarde !');
-    try { $a('searchQuery').value = tokens.join(' '); } catch {}
+    try { $a('searchQuery').value = tokens.join(' '); addHist(tokens.join(' ')); } catch {}
   }
 
 
   /* ---------- Accessibilité ---------- */
-  function force(text) {
-    try {
-      if (!('speechSynthesis' in window)) return;
-      speechSynthesis.cancel();
-      const v = bestVoice();
-      (String(text).match(/[^.!?]+[.!?]*/g) || [text]).forEach(p => { const u = new SpeechSynthesisUtterance(p.trim()); u.lang = 'fr-FR'; u.rate = 0.98; if (v) u.voice = v; speechSynthesis.speak(u); });
-    } catch {}
-  }
+  function force(text) { speak(text); }
   window.avtRead = function (t) { if (t) force(t); };
   window.avtReadNode = function (n) { if (n) force(n.innerText.replace(/🔊/g, '')); };
   const A = { fs: Number(store.get('avt_fs', '0')) || 0, hc: store.get('avt_hc', '0') === '1', rm: store.get('avt_rm', '0') === '1', ra: store.get('avt_ra', '0') === '1' };
@@ -3531,6 +3610,17 @@ loadData();
     document.querySelectorAll('#a11yMenu [data-fs]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.fs) === A.fs)));
     [['a11yHc', 'hc'], ['a11yRm', 'rm'], ['a11yRa', 'ra']].forEach(([id, k]) => { const b = $a(id); if (b) b.setAttribute('aria-pressed', String(A[k])); });
   }
+  let reading = false;
+  window.readPage = function () {
+    const b = $a('readBtn');
+    if (reading) { stopAll(); reading = false; if (b) b.textContent = '📖 Lire la page à voix haute'; return; }
+    const v = document.querySelector('.view.active'); if (!v) return;
+    const lines = v.innerText.split('\n').map(x => x.trim()).filter(x => x.length > 2);
+    const text = lines.join('. ').replace(/\.\s*\./g, '.').slice(0, 5000);
+    if (b) b.textContent = '⏹️ Arrêter la lecture';
+    reading = true; speak(text);
+    setTimeout(() => { if (reading) { reading = false; const bb = $a('readBtn'); if (bb) bb.textContent = '📖 Lire la page à voix haute'; } }, Math.min(300000, text.length * 75 + 4000));
+  };
   window.a11yFs = function (n) { A.fs = n; store.set('avt_fs', String(n)); a11yApply(); };
   window.a11yToggle = function (k) { A[k] = !A[k]; store.set('avt_' + k, A[k] ? '1' : '0'); a11yApply(); if (k === 'ra' && A.ra) force('Lecture à voix haute activée.'); };
   window.toggleA11y = function () { const m = $a('a11yMenu'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; };
