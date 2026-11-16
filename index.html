@@ -2558,5 +2558,111 @@ refreshAccountUI();
 renderListings();
 loadData();
 </script>
+
+<!-- Ambiance : voix de bienvenue et musique douce (facultatives) -->
+<div id="soundDock" style="position:fixed; left:12px; bottom:12px; z-index:50; display:flex; gap:8px;">
+  <button id="musicBtn" type="button" onclick="toggleMusic()" aria-pressed="false" title="Musique d'ambiance" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🎵 Musique</button>
+  <button id="voiceBtn" type="button" onclick="toggleVoice()" aria-pressed="true" title="Voix de bienvenue" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🔊 Voix</button>
+</div>
+<script>
+/* ===== Voix de bienvenue + musique d'ambiance (générée dans le navigateur, sans fichier ni droit d'auteur) ===== */
+(function () {
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+  };
+  let voiceOn = store.get('avt_voice', '1') === '1';
+  let musicOn = false, ctx = null, master = null, timer = null, step = 0;
+
+  function paint() {
+    const m = document.getElementById('musicBtn'), v = document.getElementById('voiceBtn');
+    if (m) { m.textContent = musicOn ? '⏸️ Musique' : '🎵 Musique'; m.setAttribute('aria-pressed', String(musicOn)); }
+    if (v) { v.textContent = voiceOn ? '🔊 Voix' : '🔇 Voix'; v.setAttribute('aria-pressed', String(voiceOn)); }
+  }
+
+  function speak(text) {
+    try {
+      if (!('speechSynthesis' in window)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'fr-FR'; u.rate = 0.95; u.pitch = 1; u.volume = 0.9;
+      const fr = speechSynthesis.getVoices().find(x => /^fr/i.test(x.lang));
+      if (fr) u.voice = fr;
+      speechSynthesis.speak(u);
+    } catch {}
+  }
+
+  // Voix de bienvenue : une seule fois par visite, au premier toucher (les navigateurs interdisent le son avant)
+  let welcomed = false;
+  function welcome() {
+    if (welcomed) return;
+    welcomed = true;
+    removeEventListener('pointerdown', welcome, true);
+    if (!voiceOn) return;
+    let seen = '0';
+    try { seen = sessionStorage.getItem('avt_welcomed') || '0'; sessionStorage.setItem('avt_welcomed', '1'); } catch {}
+    if (seen === '1') return;
+    const name = (typeof currentUser !== 'undefined' && currentUser && currentUser.name) ? ' ' + currentUser.name.split(' ')[0] : '';
+    speak('Bienvenue' + name + ' sur À Vos Trocs. Échangez vos objets, sans dépenser un euro. Bonne visite !');
+  }
+  addEventListener('pointerdown', welcome, true);
+
+  window.toggleVoice = function () {
+    voiceOn = !voiceOn; store.set('avt_voice', voiceOn ? '1' : '0');
+    if (!voiceOn) { try { speechSynthesis.cancel(); } catch {} } else { speak('Voix activée.'); }
+    paint();
+  };
+
+  // Musique : accords doux (pad) + petites notes d'arpège, volume faible
+  const CHORDS = [[261.63, 329.63, 392.0, 493.88], [220.0, 261.63, 329.63, 392.0], [174.61, 220.0, 261.63, 329.63], [196.0, 246.94, 293.66, 392.0]];
+  const SCALE = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+
+  function tone(freq, t0, dur, gain, type) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(gain, t0 + dur * 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(master);
+    o.start(t0); o.stop(t0 + dur + 0.05);
+  }
+
+  function schedule() {
+    if (!ctx || !musicOn) return;
+    const t = ctx.currentTime + 0.05;
+    if (step % 4 === 0) CHORDS[(step / 4) % CHORDS.length].forEach(f => tone(f / 2, t, 7, 0.05, 'sine'));
+    tone(SCALE[Math.floor(Math.random() * SCALE.length)], t + 0.2, 2.4, 0.03, 'triangle');
+    step++;
+  }
+
+  function startMusic() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    if (!ctx) {
+      ctx = new AC();
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800;
+      master = ctx.createGain(); master.gain.value = 0.5;
+      master.connect(lp); lp.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    step = 0; schedule();
+    timer = setInterval(schedule, 1750);
+    return true;
+  }
+
+  window.toggleMusic = function () {
+    if (!musicOn) { musicOn = startMusic(); }
+    else { musicOn = false; clearInterval(timer); if (ctx) ctx.suspend(); }
+    paint();
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx || !musicOn) return;
+    if (document.hidden) ctx.suspend(); else ctx.resume();
+  });
+
+  paint();
+})();
+</script>
 </body>
 </html>
