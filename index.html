@@ -603,6 +603,7 @@ button:disabled { opacity: 0.6; cursor: wait; }
     <a href="#" class="brand" onclick="switchView('market'); return false;"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7d47c"/><stop offset="1" stop-color="#ff9a4d"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#lg)"/><g fill="none" stroke="#15120a" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 23h28M37 15l8 8-8 8"/><path d="M47 41H19M27 33l-8 8 8 8"/></g></svg>À Vos <span>Trocs</span></a>
     <nav class="nav-tabs">
       <button class="nav-tab active" id="tab-market" onclick="switchView('market')">Accueil</button>
+      <button class="nav-tab" id="tab-swipe" onclick="switchView('swipe')">🔥 Découvrir</button>
       <button class="nav-tab" id="tab-troc" onclick="switchView('troc')">Échange 100 % troc</button>
       <button class="nav-tab" id="tab-argent" onclick="switchView('argent')">Vente & soulte (€)</button>
       <button class="nav-tab" id="tab-votes" onclick="switchView('votes')">Votes & Estimation</button>
@@ -726,6 +727,11 @@ button:disabled { opacity: 0.6; cursor: wait; }
     </div>
 
     <div class="listings-grid" id="listingsGrid"></div>
+  </div>
+
+  <div id="view-swipe" class="view">
+    <div class="section-header"><div><h2>Découvrir</h2><p style="font-size:13px; color:var(--muted);">Glissez à droite pour garder une annonce en favori, à gauche pour passer. Touchez la carte pour la voir en détail.</p></div></div>
+    <div id="swipeArea" style="max-width:420px; margin:0 auto;"></div>
   </div>
 
   <div id="view-troc" class="view">
@@ -1306,6 +1312,21 @@ function mapOffer(row) {
   };
 }
 
+let lastTouch = 0;
+async function touchSeen() {
+  if (!currentUser || Date.now() - lastTouch < 10 * 60 * 1000) return;
+  lastTouch = Date.now();
+  try { await db('profiles?id=eq.' + encodeURIComponent(currentUser.id), { method: 'PATCH', body: { last_seen: new Date().toISOString() } }); } catch {}
+}
+function seenHTML(userId) {
+  const p = profiles[userId];
+  if (!p || !p.last_seen) return '';
+  const h = (Date.now() - new Date(p.last_seen).getTime()) / 3600000;
+  if (h < 24) return ' • <span style="color:#2ecc71;">🟢 Actif aujourd\'hui</span>';
+  if (h < 24 * 7) return ' • <span style="color:var(--muted);">Actif cette semaine</span>';
+  return ` • <span style="color:var(--muted);">Vu il y a ${Math.floor(h / 24)} jours</span>`;
+}
+
 let reviewRows = [];
 let phoneRows = [];
 function normPhone(v) {
@@ -1362,7 +1383,7 @@ async function rateOffer(offerId, targetId, stars) {
 async function loadData() {
   try {
     const [p, l, v, po, o, rv, ph] = await Promise.all([
-      db('profiles?select=id,name,city,created_at'),
+      db('profiles?select=id,name,city,created_at,last_seen,invited_by'),
       db('listings?select=*&order=created_at.desc'),
       db('votes?select=target_id,user_id,fair'),
       db('polls?select=*&order=created_at.desc'),
@@ -1372,6 +1393,7 @@ async function loadData() {
     ]);
     reviewRows = rv || [];
     phoneRows = ph || [];
+    touchSeen();
     profiles = {};
     p.forEach(x => { profiles[x.id] = x; });
     listings = l.map(mapListing);
@@ -1458,7 +1480,7 @@ async function submitSignup(e) {
       const data = await authCall('signup', {
         email: String(fd.get('email')).trim().toLowerCase(),
         password: pw,
-        data: { name: String(fd.get('name')).trim(), city: String(fd.get('city')).trim() }
+        data: { name: String(fd.get('name')).trim(), city: String(fd.get('city')).trim(), invited_by: (() => { try { return localStorage.getItem('avt_inv') || ''; } catch { return ''; } })() }
       });
       if (!data.access_token) {
         return authFail('Compte créé. Confirmez votre adresse via le lien reçu par e-mail, puis connectez-vous.');
@@ -1523,6 +1545,46 @@ function refreshAccountUI() {
   updateKPIs();
 }
 
+function memberStats(userId) {
+  const mine = listings.filter(x => x.ownerId === userId).length;
+  const done = offers.filter(o => o.status === 'Acceptée' && (o.ownerId === userId || o.senderId === userId)).length;
+  const invited = Object.values(profiles).filter(p => p.invited_by === userId).length;
+  const rep = repOf(userId) || { avg: 0, n: 0 };
+  return { mine, done, invited, reviews: rep.n, avg: rep.avg };
+}
+const LEVELS = [[0, '🌱 Débutant'], [10, '🔁 Troqueur'], [30, '⭐ Expert'], [60, '👑 Légende']];
+function levelOf(points) {
+  let lvl = 0;
+  LEVELS.forEach((l, i) => { if (points >= l[0]) lvl = i; });
+  return { name: LEVELS[lvl][1], next: LEVELS[lvl + 1] || null };
+}
+function badgesFor(userId, st) {
+  const isF = Object.values(profiles).sort((a, b) => a.created_at < b.created_at ? -1 : 1).slice(0, FOUNDER_LIMIT).some(x => x.id === userId);
+  return [
+    ['🏅', 'Fondateur', isF, 'Parmi les 100 premiers membres'],
+    ['🌱', 'Premier échange', st.done >= 1, '1 échange accepté'],
+    ['🔁', 'Troqueur confirmé', st.done >= 3, '3 échanges acceptés'],
+    ['📦', 'Vendeur actif', st.mine >= 5, '5 annonces publiées'],
+    ['⭐', 'Bien noté', st.reviews >= 3 && st.avg >= 4.5, '3 avis, moyenne 4,5 ou plus'],
+    ['📣', 'Ambassadeur', st.invited >= 3, '3 amis invités inscrits']
+  ];
+}
+function gamificationHTML(userId) {
+  const st = memberStats(userId);
+  const pts = st.mine * 2 + st.done * 10 + st.invited * 5 + st.reviews * 2;
+  const lv = levelOf(pts);
+  const b = badgesFor(userId, st);
+  return `<div style="margin-bottom:18px; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2);">
+    <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700;"><span>${lv.name}</span><span>${pts} points</span></div>
+    ${lv.next ? `<div style="font-size:12px; color:var(--muted); margin-top:2px;">Encore ${lv.next[0] - pts} points pour devenir ${lv.next[1]}</div>` : '<div style="font-size:12px; color:var(--muted); margin-top:2px;">Niveau maximum atteint !</div>'}
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
+      ${b.map(x => `<span title="${esc(x[3])}" style="font-size:12px; padding:4px 8px; border-radius:999px; border:1px solid var(--border); ${x[2] ? 'background:var(--lime); color:var(--green); font-weight:700;' : 'opacity:.45;'}">${x[0]} ${x[1]}</span>`).join('')}
+    </div>
+    <div style="font-size:12px; color:var(--muted); margin-top:10px;">📣 Amis invités inscrits : <strong>${st.invited}</strong> — <a href="#" onclick="inviteFriends(); return false;" style="font-weight:700;">inviter un ami</a></div>
+    <div style="font-size:11px; color:var(--muted); margin-top:6px;">Points : annonce +2, échange accepté +10, ami invité +5, avis reçu +2.</div>
+  </div>`;
+}
+
 function openAccount() {
   if (!currentUser) return openAuth('login');
   const u = currentUser;
@@ -1551,6 +1613,7 @@ function openAccount() {
       <div class="trust-bar"><span style="width:${score}%"></span></div>
       <div style="font-size:12px; color:var(--muted);">Il progresse avec vos annonces, vos propositions et vos échanges conclus.</div>
     </div>
+    ${gamificationHTML(u.id)}
     ${(() => {
       const mine = phoneRows.find(x => x.user_id === u.id);
       return `<form onsubmit="submitPhone(event)" style="margin-bottom:18px; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2);">
@@ -1596,6 +1659,7 @@ function showView(view) {
 function renderCurrentView() {
   const view = currentView;
   if (view === 'market') renderListings();
+  if (view === 'swipe') renderSwipe();
   if (view === 'troc') renderFilteredGrid('TROC', 'trocGrid');
   if (view === 'argent') { renderFilteredGrid('HYBRIDE', 'hybrideGrid'); renderFilteredGrid('VENTE', 'occasionGrid'); }
   if (view === 'votes') renderVotes();
@@ -1735,6 +1799,73 @@ function renderMyInventory() {
     : stateBox("Vous n'avez pas encore publié d'article. Appuyez sur « + Déposer une annonce » pour démarrer.");
 }
 
+let swipeSeen = new Set();
+function swipeQueue() {
+  return listings.filter(x => !isMine(x) && !swipeSeen.has(x.id)).sort((a, b) => (b.boost ? 1 : 0) - (a.boost ? 1 : 0));
+}
+function renderSwipe() {
+  const box = $('swipeArea');
+  if (!box) return;
+  const item = swipeQueue()[0];
+  if (!item) {
+    box.innerHTML = `<div style="text-align:center; padding:40px 10px; color:var(--muted);">
+      <div style="font-size:42px;">🎉</div>
+      <p style="margin:10px 0 16px;">Vous avez tout vu pour l'instant. Revenez bientôt : de nouvelles annonces arrivent !</p>
+      <button class="btn btn-outline" onclick="swipeSeen = new Set(); renderSwipe();">Revoir les annonces</button>
+    </div>`;
+    return;
+  }
+  const isFav = favs.includes(item.id);
+  box.innerHTML = `
+    <div id="swipeCard" style="position:relative; background:var(--surface); border:1px solid var(--border); border-radius:20px; overflow:hidden; box-shadow:var(--shadow-md); touch-action:pan-y; user-select:none; cursor:grab;">
+      <img src="${esc(item.image)}" alt="${esc(item.title)}" draggable="false" style="width:100%; height:300px; object-fit:cover; display:block; pointer-events:none;">
+      <div style="padding:14px;">
+        <div style="margin-bottom:6px;">${getBadgeHTML(item.mode)}</div>
+        <div style="font-size:18px; font-weight:800;">${esc(item.title)}</div>
+        <div style="font-size:14px; color:var(--green); font-weight:700; margin:2px 0 6px;">${esc(item.price)} € • 📍 ${esc(item.city)}</div>
+        <div style="font-size:13px; color:var(--muted);">Recherche : ${esc(item.want)}</div>
+      </div>
+      <div id="swipeStamp" style="position:absolute; top:16px; left:16px; font-size:22px; font-weight:900; opacity:0; padding:4px 10px; border:3px solid; border-radius:10px;"></div>
+    </div>
+    <div style="display:flex; justify-content:center; gap:16px; margin-top:16px;">
+      <button class="btn btn-outline" style="width:64px; height:64px; border-radius:50%; font-size:24px;" onclick="swipeDecide('${esc(item.id)}', false)" aria-label="Passer">✖</button>
+      <button class="btn btn-outline" style="width:64px; height:64px; border-radius:50%; font-size:22px;" onclick="openDetail('${esc(item.id)}')" aria-label="Voir">💬</button>
+      <button class="btn btn-primary" style="width:64px; height:64px; border-radius:50%; font-size:24px;" onclick="swipeDecide('${esc(item.id)}', true)" aria-label="J'aime">${isFav ? '♥' : '♡'}</button>
+    </div>
+    <div style="text-align:center; font-size:12px; color:var(--muted); margin-top:10px;">${swipeQueue().length} annonce${swipeQueue().length > 1 ? 's' : ''} à découvrir</div>`;
+  attachSwipe($('swipeCard'), item.id);
+}
+function swipeDecide(id, like) {
+  if (like && !requireAuth(() => swipeDecide(id, true), 'enregistrer des favoris')) return;
+  swipeSeen.add(id);
+  if (like && !favs.includes(id)) { favs = [...favs, id]; saveLocal('avt_favs', favs); notify('Ajouté à vos favoris ♥'); }
+  renderSwipe();
+}
+function attachSwipe(el, id) {
+  let x0 = null, dx = 0, moved = false;
+  const stamp = $('swipeStamp');
+  el.addEventListener('pointerdown', e => { x0 = e.clientX; dx = 0; moved = false; el.setPointerCapture(e.pointerId); el.style.transition = 'none'; });
+  el.addEventListener('pointermove', e => {
+    if (x0 === null) return;
+    dx = e.clientX - x0;
+    if (Math.abs(dx) > 6) moved = true;
+    el.style.transform = `translateX(${dx}px) rotate(${dx / 25}deg)`;
+    stamp.style.opacity = Math.min(1, Math.abs(dx) / 90);
+    stamp.textContent = dx > 0 ? '♥ J\'AIME' : 'PASSER';
+    stamp.style.color = dx > 0 ? '#2ecc71' : '#e74c3c';
+    stamp.style.left = dx > 0 ? '16px' : 'auto'; stamp.style.right = dx > 0 ? 'auto' : '16px';
+  });
+  const end = () => {
+    if (x0 === null) return;
+    const d = dx; x0 = null;
+    if (Math.abs(d) > 90) { swipeDecide(id, d > 0); return; }
+    el.style.transition = 'transform .2s'; el.style.transform = ''; stamp.style.opacity = 0;
+    if (!moved) openDetail(id);
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+}
+
 function toggleFav(id) {
   if (!requireAuth(() => toggleFav(id), 'enregistrer des favoris')) return;
   favs = favs.includes(id) ? favs.filter(x => x !== id) : [...favs, id];
@@ -1752,7 +1883,7 @@ function openDetail(id) {
     ${x.images.length > 1 ? `<div class="thumbs">${x.images.map(src => `<img src="${esc(src)}" alt="" onclick="$('detailMainImg').src = this.src">`).join('')}</div>` : ''}
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
       ${getBadgeHTML(x.mode)}
-      <span style="font-size:13px; color:var(--muted);">📍 ${esc(x.city)} • Membre : <strong>${esc(x.owner)}</strong>${repHTML(x.ownerId)}</span>
+      <span style="font-size:13px; color:var(--muted);">📍 ${esc(x.city)} • Membre : <strong>${esc(x.owner)}</strong>${repHTML(x.ownerId)}${seenHTML(x.ownerId)}</span>
     </div>
     <div style="font-size:22px; font-weight:800; color:var(--green); margin-bottom:10px;">${esc(x.price)} € <span style="font-size:13px; font-weight:500; color:var(--muted);">(${esc(x.condition)})</span></div>
     <p style="font-size:14px; color:var(--ink); line-height:1.6; margin-bottom:16px;">${esc(x.description)}</p>
@@ -2384,8 +2515,15 @@ function shareItem(id) {
   shareLink(`🔁 ${x.title} — ${x.price} € sur À Vos Trocs. Échange 100 % troc ou vente avec soulte !`, SITE_URL + '?a=' + encodeURIComponent(id), x.title);
 }
 function inviteFriends() {
-  shareLink('🔁 Rejoins À Vos Trocs : échange tes objets 100 % troc, sans argent, ou vends avec soulte. Gratuit, entre membres !', SITE_URL + '?ref=invite', 'À Vos Trocs');
+  const link = SITE_URL + (currentUser ? '?inv=' + encodeURIComponent(currentUser.id) : '?ref=invite');
+  shareLink('🔁 Rejoins À Vos Trocs : échange tes objets 100 % troc, sans argent, ou vends avec soulte. Gratuit, entre membres !', link, 'À Vos Trocs');
 }
+(function captureInvite() {
+  try {
+    const inv = new URLSearchParams(location.search).get('inv');
+    if (inv && /^[0-9a-f-]{36}$/i.test(inv)) localStorage.setItem('avt_inv', inv);
+  } catch {}
+})();
 (function openSharedListing() {
   const id = new URLSearchParams(location.search).get('a');
   if (!id) return;
