@@ -3284,7 +3284,7 @@ function setupInstall() {
   }
 }
 
-const APP_VERSION='2026-11-16-10';
+const APP_VERSION='2026-11-16-11';
 (function(){
   async function checkVersion(){
     try{
@@ -3330,7 +3330,7 @@ loadData();
 </div>
 <div id="soundDock" style="position:fixed; left:12px; bottom:12px; z-index:50; display:flex; gap:8px;">
   <button id="musicBtn" type="button" onclick="toggleMusicMenu()" aria-pressed="false" title="Musique d'ambiance" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🎵 Musique</button>
-  <button id="voiceBtn" type="button" onclick="toggleVoice()" aria-pressed="true" title="Voix de bienvenue" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🔊 Voix</button>
+  <button id="voiceBtn" type="button" hidden onclick="toggleVoice()" aria-pressed="true" title="Voix de bienvenue" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">🔊 Voix</button>
   <button id="a11yBtn" type="button" onclick="toggleA11y()" aria-label="Accessibilité" title="Accessibilité" style="border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:999px; padding:9px 13px; font-size:13px; cursor:pointer; box-shadow:var(--shadow-md);">♿ Accès</button>
 </div>
 <script>
@@ -3340,7 +3340,8 @@ loadData();
     get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch {} }
   };
-  let voiceOn = store.get('avt_voice', '1') === '1';
+  const VOICE_AUTO = false;   // voix automatique coupée pour l'instant (remettre à true avec la voix naturelle)
+  let voiceOn = VOICE_AUTO && store.get('avt_voice', '1') === '1';
   let musicOn = false, ctx = null, master = null, fxIn = null, noiseBuf = null, timer = null;
   let nextT = 0, stp = 0;
 
