@@ -709,6 +709,7 @@ button:disabled { opacity: 0.6; cursor: wait; }
           <option value="ALL">Tous les modes</option>
           <option value="TROC">Échange 100 % troc</option>
           <option value="HYBRIDE">Échange + Soulte (€)</option>
+          <option value="DON">🎁 Dons gratuits</option>
           <option value="VENTE">Vente d'occasion</option>
         </select>
         <select class="search-select" id="sortOrder" onchange="renderListings()">
@@ -717,6 +718,17 @@ button:disabled { opacity: 0.6; cursor: wait; }
           <option value="price_desc">Valeur décroissante</option>
         </select>
         <button class="btn btn-primary" onclick="renderListings()">Filtrer</button>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; font-size:13px;">
+        <select class="search-select" id="filterRadius" onchange="renderListings()" style="max-width:170px;">
+          <option value="0">Partout</option>
+          <option value="10">Dans 10 km</option>
+          <option value="25">Dans 25 km</option>
+          <option value="50">Dans 50 km</option>
+          <option value="100">Dans 100 km</option>
+        </select>
+        <button class="btn btn-outline btn-sm" type="button" onclick="useMyLocation()">📍 Autour de moi</button>
+        <span id="geoInfo" style="color:var(--muted);"></span>
       </div>
       <div class="chips-bar" id="categoryChips"></div>
     </div>
@@ -821,6 +833,7 @@ button:disabled { opacity: 0.6; cursor: wait; }
         <option value="TROC">Échange 100 % troc (sans argent)</option>
         <option value="HYBRIDE">Échange + soulte en euros</option>
         <option value="VENTE">Vente directe (€)</option>
+        <option value="DON">🎁 Don gratuit (je donne)</option>
       </select>
     </div>
     <div class="form-group">
@@ -1688,9 +1701,12 @@ function setCategory(cat) {
   renderListings();
 }
 
+const priceLabel = x => Number(x.price) === 0 ? 'Gratuit' : x.price + ' €';
+
 function getBadgeHTML(mode) {
   if (mode === 'HYBRIDE') return '<span class="tag-pill tag-hybride">Échange + Soulte €</span>';
   if (mode === 'VENTE') return '<span class="tag-pill tag-vente">Vente Occasion</span>';
+  if (mode === 'DON') return '<span class="tag-pill tag-troc">🎁 Don gratuit</span>';
   return '<span class="tag-pill tag-troc">100 % Troc</span>';
 }
 
@@ -1704,6 +1720,7 @@ function buildCardHTML(item) {
         <img src="${esc(item.image)}" alt="${esc(item.title)}" loading="lazy">
         <div class="badge-stack">
           ${getBadgeHTML(item.mode)}
+          ${item.distKm != null && Number($('filterRadius').value) ? `<span class="tag-pill tag-troc">📍 ${Math.max(1, Math.round(item.distKm))} km</span>` : ''}
           ${item.boost ? '<span class="tag-pill tag-boost">À la une</span>' : ''}
           ${item.images.length > 1 ? `<span class="tag-pill tag-troc">${item.images.length} photos</span>` : ''}
         </div>
@@ -1718,7 +1735,7 @@ function buildCardHTML(item) {
         </div>
         <div class="card-title">${esc(item.title)}</div>
         <div class="card-price-row">
-          <span class="est-val">${esc(item.price)} €</span>
+          <span class="est-val">${esc(priceLabel(item))}</span>
           <span class="est-label">${item.mode === 'VENTE' ? 'Prix de vente' : 'Valeur estimée'}</span>
         </div>
         <div class="card-exchange-box">
@@ -1762,6 +1779,49 @@ function voiceSearch() {
   try { recog.start(); notify('Je vous écoute… dites par exemple « vélo » ou « console de jeux ».'); } catch { btn.textContent = '🎤'; recog = null; }
 }
 
+/* ===== Recherche par distance ===== */
+let geoCache = loadLocal('avt_geo', {});
+let geoPending = {};
+let myPos = null;
+function kmBetween(a, b) {
+  const R = 6371, rad = d => d * Math.PI / 180;
+  const dLat = rad(b[0] - a[0]), dLon = rad(b[1] - a[1]);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function geoOf(name) {
+  const key = String(name || '').toLowerCase().trim();
+  if (!key) return null;
+  if (key in geoCache) return geoCache[key];
+  if (!geoPending[key]) {
+    geoPending[key] = fetch('https://api-adresse.data.gouv.fr/search/?type=municipality&limit=1&q=' + encodeURIComponent(key))
+      .then(r => r.json())
+      .then(j => {
+        const c = j && j.features && j.features[0] && j.features[0].geometry.coordinates;
+        geoCache[key] = c ? [c[1], c[0]] : null;
+        saveLocal('avt_geo', geoCache);
+      })
+      .catch(() => { delete geoPending[key]; })
+      .then(() => { if (currentView === 'market') renderListings(); });
+  }
+  return undefined;
+}
+function useMyLocation() {
+  if (!navigator.geolocation) { notify("La localisation n'est pas disponible sur cet appareil."); return; }
+  notify('Autorisez la localisation pour voir les annonces proches.');
+  navigator.geolocation.getCurrentPosition(pos => {
+    myPos = [pos.coords.latitude, pos.coords.longitude];
+    $('searchCity').value = '';
+    if ($('filterRadius').value === '0') $('filterRadius').value = '25';
+    renderListings();
+  }, () => notify('Localisation refusée. Tapez plutôt votre ville dans la barre de recherche.'), { timeout: 10000 });
+}
+function searchCenter() {
+  const city = $('searchCity').value.trim();
+  if (city) { const c = geoOf(city); return c === undefined ? undefined : c; }
+  return myPos;
+}
+
 function renderListings() {
   renderChips();
   const q = $('searchQuery').value.toLowerCase().trim();
@@ -1769,10 +1829,22 @@ function renderListings() {
   const mode = $('filterMode').value;
   const sort = $('sortOrder').value;
 
+  const radius = Number($('filterRadius').value) || 0;
+  const center = radius ? searchCenter() : null;
+  const geoInfo = $('geoInfo');
+  if (geoInfo) geoInfo.textContent = !radius ? '' : center === undefined ? 'Recherche de la ville…' : center === null ? 'Ville introuvable : tapez-la dans la barre ci-dessus ou utilisez « Autour de moi ».' : '';
+  const geoOn = radius && center;
+
   const filtered = listings.filter(item => {
+    if (geoOn) {
+      const c = geoOf(item.city);
+      if (!c) return false;
+      item.distKm = kmBetween(center, c);
+      if (item.distKm > radius) return false;
+    }
     const matchCat = activeCat === 'Toutes' || (activeCat === 'Favoris' && favs.includes(item.id)) || item.category === activeCat;
     const matchMode = mode === 'ALL' || item.mode === mode;
-    const matchCity = !city || item.city.toLowerCase().includes(city);
+    const matchCity = geoOn || !city || item.city.toLowerCase().includes(city);
     const matchText = !q || [item.title, item.description, item.want, item.category].join(' ').toLowerCase().includes(q);
     return matchCat && matchMode && matchCity && matchText;
   });
@@ -1780,6 +1852,7 @@ function renderListings() {
   if (sort === 'price_asc') filtered.sort((a, b) => a.price - b.price);
   else if (sort === 'price_desc') filtered.sort((a, b) => b.price - a.price);
   else filtered.sort((a, b) => (b.boost ? 1 : 0) - (a.boost ? 1 : 0));
+  if (geoOn && sort === 'recent') filtered.sort((a, b) => (b.boost ? 1 : 0) - (a.boost ? 1 : 0) || a.distKm - b.distKm);
 
   $('resultsCount').textContent = `${filtered.length} annonce${filtered.length > 1 ? 's' : ''}`;
   $('listingsGrid').innerHTML = filtered.length
@@ -1822,7 +1895,7 @@ function renderSwipe() {
       <div style="padding:14px;">
         <div style="margin-bottom:6px;">${getBadgeHTML(item.mode)}</div>
         <div style="font-size:18px; font-weight:800;">${esc(item.title)}</div>
-        <div style="font-size:14px; color:var(--green); font-weight:700; margin:2px 0 6px;">${esc(item.price)} € • 📍 ${esc(item.city)}</div>
+        <div style="font-size:14px; color:var(--green); font-weight:700; margin:2px 0 6px;">${esc(priceLabel(item))} • 📍 ${esc(item.city)}</div>
         <div style="font-size:13px; color:var(--muted);">Recherche : ${esc(item.want)}</div>
       </div>
       <div id="swipeStamp" style="position:absolute; top:16px; left:16px; font-size:22px; font-weight:900; opacity:0; padding:4px 10px; border:3px solid; border-radius:10px;"></div>
@@ -1885,7 +1958,7 @@ function openDetail(id) {
       ${getBadgeHTML(x.mode)}
       <span style="font-size:13px; color:var(--muted);">📍 ${esc(x.city)} • Membre : <strong>${esc(x.owner)}</strong>${repHTML(x.ownerId)}${seenHTML(x.ownerId)}</span>
     </div>
-    <div style="font-size:22px; font-weight:800; color:var(--green); margin-bottom:10px;">${esc(x.price)} € <span style="font-size:13px; font-weight:500; color:var(--muted);">(${esc(x.condition)})</span></div>
+    <div style="font-size:22px; font-weight:800; color:var(--green); margin-bottom:10px;">${esc(priceLabel(x))} <span style="font-size:13px; font-weight:500; color:var(--muted);">(${esc(x.condition)})</span></div>
     <p style="font-size:14px; color:var(--ink); line-height:1.6; margin-bottom:16px;">${esc(x.description)}</p>
     <div style="background:var(--surface-2); padding:14px; border-radius:12px; border:1px solid var(--border); margin-bottom:18px;">
       <div style="font-size:12px; font-weight:700; color:var(--green); text-transform:uppercase;">Conditions d'échange / vente</div>
@@ -1933,8 +2006,15 @@ function openPostModal(defaultMode = 'TROC') {
 
 function togglePostFields() {
   const mode = $('postMode').value;
-  $('wantFieldGroup').style.display = mode === 'VENTE' ? 'none' : 'block';
-  $('postWantInput').required = mode !== 'VENTE';
+  const priceInput = document.querySelector('#postForm [name=price]');
+  if (priceInput) {
+    const grp = priceInput.closest('.form-group');
+    if (grp) grp.style.display = mode === 'DON' ? 'none' : 'block';
+    priceInput.required = mode !== 'DON';
+    if (mode === 'DON') priceInput.value = '0'; else if (priceInput.value === '0') priceInput.value = '';
+  }
+  $('wantFieldGroup').style.display = (mode === 'VENTE' || mode === 'DON') ? 'none' : 'block';
+  $('postWantInput').required = mode !== 'VENTE' && mode !== 'DON';
   $('wantLabel').textContent = mode === 'TROC'
     ? 'Ce que vous recherchez en échange (objets uniquement, sans argent)'
     : 'Ce que vous recherchez en échange (et conditions de soulte)';
@@ -2055,9 +2135,9 @@ async function submitListing(e) {
           title: String(fd.get('title')).trim(),
           category: fd.get('category'),
           condition: fd.get('condition'),
-          price: Math.round(Number(fd.get('price'))),
+          price: mode === 'DON' ? 0 : Math.round(Number(fd.get('price'))),
           city: String(fd.get('city')).trim(),
-          want: mode === 'VENTE' ? `Vente directe ${fd.get('price')} €` : String(fd.get('want')).trim(),
+          want: mode === 'DON' ? 'Don gratuit : à récupérer sur place' : mode === 'VENTE' ? `Vente directe ${fd.get('price')} €` : String(fd.get('want')).trim(),
           description: String(fd.get('description')).trim(),
           images: images,
           boost: boost,
@@ -2097,7 +2177,9 @@ function openOfferModal() {
   if (!currentItem) return;
   if (isMine(currentItem)) { notify("C'est votre propre annonce."); return; }
   const mode = currentItem.mode;
-  $('offerTypeSelect').innerHTML = mode === 'TROC'
+  $('offerTypeSelect').innerHTML = mode === 'DON'
+    ? '<option value="DON">Je suis intéressé(e) : je viens le récupérer</option>'
+    : mode === 'TROC'
     ? '<option value="TROC">Échange 100 % troc (sans argent)</option>'
     : mode === 'VENTE'
       ? '<option value="ACHAT">Achat direct au prix demandé (€)</option><option value="HYBRIDE">Échange d\'objet(s) + soulte (€)</option>'
@@ -2111,7 +2193,7 @@ function openOfferModal() {
 
 function updateOfferBuilder() {
   const type = $('offerTypeSelect').value;
-  $('offerObjectGroup').style.display = type === 'ACHAT' ? 'none' : 'block';
+  $('offerObjectGroup').style.display = (type === 'ACHAT' || type === 'DON') ? 'none' : 'block';
   $('offerCashGroup').style.display = type === 'HYBRIDE' ? 'block' : 'none';
   updateEquity();
 }
@@ -2184,14 +2266,15 @@ async function submitOffer(e) {
   const dir = fd.get('cashDirection');
   const items = offeredItems();
   const total = offeredTotal();
-  if (type !== 'ACHAT' && !items.length) { notify('Indiquez au moins un objet proposé en échange.'); return; }
+  if (type !== 'ACHAT' && type !== 'DON' && !items.length) { notify('Indiquez au moins un objet proposé en échange.'); return; }
   if (type === 'TROC' && total < currentItem.price * 0.9) {
     notify("Échange non équitable : ajoutez un autre objet pour atteindre la valeur de l'annonce. Pas d'argent dans cet espace.");
     return;
   }
   const itemsLabel = items.map(i => i.name).filter(Boolean).join(' + ') || 'Lot proposé';
   let summary;
-  if (type === 'ACHAT') summary = `Achat direct : ${currentItem.price} €`;
+  if (type === 'DON') summary = 'Demande de don : je viens le récupérer';
+  else if (type === 'ACHAT') summary = `Achat direct : ${currentItem.price} €`;
   else if (type === 'TROC') summary = `Troc 100 % : ${itemsLabel} (${total} €)`;
   else summary = `Troc : ${itemsLabel} (${dir === 'ADD' ? '+' : '-'} ${cash} €)`;
 
@@ -2207,7 +2290,7 @@ async function submitOffer(e) {
           message: String(fd.get('message')).trim()
         }
       });
-      if ($('submitToPublicVote').checked && type !== 'ACHAT') {
+      if ($('submitToPublicVote').checked && type !== 'ACHAT' && type !== 'DON') {
         await db('polls', {
           method: 'POST',
           body: {
@@ -2287,13 +2370,16 @@ async function decideOffer(id, accept) {
         ? { status: 'Acceptée', code: String(Math.floor(100000 + Math.random() * 900000)) }
         : { status: 'Refusée' }
     });
-    if (accept) {
+    const offerRow = offers.find(x => x.id === id);
+    const targetListing = offerRow && listings.find(l => l.id === offerRow.targetId);
+    const isDon = Boolean(targetListing && targetListing.mode === 'DON');
+    if (accept && !isDon) {
       const founder = isFounder();
       try {
         await db('payments', { method: 'POST', body: { type: 'Frais de validation troc', amount: founder ? 0 : TROC_FEE, status: founder ? 'Offert (fondateur)' : 'À encaisser' } });
       } catch {}
     }
-    notify(accept ? 'Proposition acceptée. Code de remise TrocPass généré.' + (isFounder() ? ' Frais de validation offerts (membre fondateur 🏅).' : ' Frais de validation : ' + fmtEuro(TROC_FEE) + '.') : 'Proposition refusée.');
+    notify(accept ? 'Proposition acceptée. Code de remise TrocPass généré.' + (isDon ? ' Don : aucun frais.' : isFounder() ? ' Frais de validation offerts (membre fondateur 🏅).' : ' Frais de validation : ' + fmtEuro(TROC_FEE) + '.') : 'Proposition refusée.');
     await loadData();
     renderInbox();
   } catch (err) {
@@ -2380,9 +2466,9 @@ const STOP_WORDS = new Set(['avec', 'pour', 'sans', 'dans', 'plus', 'contre', 'p
 const tokens = t => String(t || '').toLowerCase().split(/[^a-zà-ÿ0-9]+/).filter(w => w.length > 3 && !STOP_WORDS.has(w));
 
 function findMatches() {
-  const mine = listings.filter(isMine);
+  const mine = listings.filter(x => isMine(x) && x.mode !== 'DON');
   const out = [];
-  listings.filter(x => !isMine(x)).forEach(other => {
+  listings.filter(x => !isMine(x) && x.mode !== 'DON').forEach(other => {
     mine.forEach(m => {
       const myWords = tokens(m.title + ' ' + m.category);
       const theirWords = tokens(other.title + ' ' + other.category);
@@ -2401,8 +2487,8 @@ function wantsItem(a, b) {
 
 // Échange à trois : A veut l'objet de B, B veut l'objet de C, C veut l'objet de A.
 function findChains() {
-  const mine = listings.filter(isMine);
-  const others = listings.filter(x => !isMine(x));
+  const mine = listings.filter(x => isMine(x) && x.mode !== 'DON');
+  const others = listings.filter(x => !isMine(x) && x.mode !== 'DON');
   const out = [], seen = new Set();
   mine.forEach(a => {
     others.forEach(b => {
@@ -2512,7 +2598,7 @@ function shareLink(text, url, title) {
 function shareItem(id) {
   const x = listings.find(l => l.id === id);
   if (!x) return;
-  shareLink(`🔁 ${x.title} — ${x.price} € sur À Vos Trocs. Échange 100 % troc ou vente avec soulte !`, SITE_URL + '?a=' + encodeURIComponent(id), x.title);
+  shareLink(x.mode === 'DON' ? `🎁 À donner : ${x.title} — gratuit sur À Vos Trocs !` : `🔁 ${x.title} — ${x.price} € sur À Vos Trocs. Échange 100 % troc ou vente avec soulte !`, SITE_URL + '?a=' + encodeURIComponent(id), x.title);
 }
 function inviteFriends() {
   const link = SITE_URL + (currentUser ? '?inv=' + encodeURIComponent(currentUser.id) : '?ref=invite');
@@ -2558,7 +2644,7 @@ async function reportItem(id) {
 
 /* ===== Administration ===== */
 let adminState = null;
-const MODE_LABELS = { TROC: '100 % troc', HYBRIDE: 'Échange + soulte', VENTE: 'Vente directe' };
+const MODE_LABELS = { TROC: '100 % troc', HYBRIDE: 'Échange + soulte', VENTE: 'Vente directe', DON: 'Don gratuit' };
 const memberName = id => (profiles[id] || {}).name || '—';
 
 async function openAdmin() {
