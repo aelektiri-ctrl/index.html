@@ -44,7 +44,7 @@
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; show(); });
   window.addEventListener('appinstalled', function () { try { localStorage.setItem('rcInst', 'ok'); } catch (e) {} hide(); });
   var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
-  var hide = function () { var b = document.getElementById('rcInst'); if (b) b.parentNode.removeChild(b); };
+  var hide = function () { ['rcInst', 'rcInstH'].forEach(function (i) { var b = document.getElementById(i); if (b) b.parentNode.removeChild(b); }); };
   function howTo() {
     if (ios) return 'Touche <b>Partager ⎋</b> en bas de Safari, puis <b>« Sur l’écran d’accueil »</b>.';
     if (/SamsungBrowser/.test(ua)) return 'Touche le menu <b>≡</b> en bas, puis <b>« Ajouter page à »</b> › <b>« Écran d’accueil »</b>.';
@@ -58,13 +58,16 @@
     if (!document.body || document.getElementById('gate6') || !get('rc')) { setTimeout(show, 2500); return; }
     shown = true;
     var d = document.createElement('div'); d.id = 'rcInst';
-    d.setAttribute('style', 'position:fixed;left:10px;right:10px;bottom:calc(232px + env(safe-area-inset-bottom));z-index:4;background:linear-gradient(135deg,#39d98a,#2ec4b6);color:#04140c;border-radius:18px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.5);font:600 14px/1.35 system-ui,sans-serif;display:flex;align-items:center');
-    d.innerHTML = '<span style="font-size:30px;margin-right:10px">📲</span><span style="flex:1"><b style="display:block;font-size:15px">Installe Res·CUE</b>' + (deferred ? 'Une icône sur ton écran, les alertes même appli fermée.' : howTo()) + '</span>'
-      + (deferred ? '<button id="rcInstGo" style="margin-left:8px;border:0;border-radius:12px;padding:10px 14px;background:#04140c;color:#39d98a;font:800 14px system-ui">Installer</button>' : '')
-      + '<button id="rcInstX" aria-label="Plus tard" style="margin-left:6px;border:0;background:none;color:#04140c;font-size:20px;padding:4px 6px">✕</button>';
+    d.setAttribute('style', 'position:fixed;right:10px;top:calc(112px + env(safe-area-inset-top));z-index:6;display:flex;align-items:center;background:#39d98a;color:#04140c;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.45);font:700 13px system-ui,sans-serif');
+    d.innerHTML = '<button id="rcInstGo" style="border:0;background:none;color:#04140c;font:800 13px system-ui,sans-serif;padding:8px 4px 8px 12px">📲 Installer l’appli</button><button id="rcInstX" aria-label="Plus tard" style="border:0;background:none;color:#04140c;font-size:13px;padding:8px 10px 8px 6px;opacity:.7">✕</button>';
     document.body.appendChild(d);
-    var go = document.getElementById('rcInstGo');
-    if (go) go.onclick = function () { deferred.prompt(); deferred.userChoice.then(function (c) { if (c && c.outcome === 'accepted') { try { localStorage.setItem('rcInst', 'ok'); } catch (e) {} } hide(); deferred = null; }); };
+    document.getElementById('rcInstGo').onclick = function () {
+      if (deferred) { deferred.prompt(); deferred.userChoice.then(function (c) { if (c && c.outcome === 'accepted') { try { localStorage.setItem('rcInst', 'ok'); } catch (e) {} hide(); } deferred = null; }); return; }
+      var h = document.getElementById('rcInstH'); if (h) { h.parentNode.removeChild(h); return; }
+      h = document.createElement('div'); h.id = 'rcInstH';
+      h.setAttribute('style', 'position:fixed;right:10px;left:22%;top:calc(152px + env(safe-area-inset-top));z-index:6;background:#fff;color:#0b0f14;border-radius:14px;padding:10px 12px;font:500 13px/1.35 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.45)');
+      h.innerHTML = howTo(); document.body.appendChild(h); setTimeout(function () { if (h.parentNode) h.parentNode.removeChild(h); }, 9000);
+    };
     document.getElementById('rcInstX').onclick = function () { try { localStorage.setItem('rcInstLater', String(Date.now())); } catch (e) {} hide(); };
   }
   /* navigateurs sans installation automatique : on montre la marche à suivre */
