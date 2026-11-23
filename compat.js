@@ -36,6 +36,17 @@
   var vh = function () { document.documentElement.style.setProperty('--vh', window.innerHeight + 'px'); };
   vh(); window.addEventListener('resize', vh);
 
+  /* 2b) Dès que les notifications sont autorisées, l'abonnement aux alertes est enregistré tout de suite
+     (alertes reçues même appli fermée), sans attendre la prochaine ouverture */
+  var pushTry = function () {
+    try {
+      if (!('Notification' in window) || Notification.permission !== 'granted' || !localStorage.getItem('rc')) return;
+      if (sessionStorage.getItem('rcPushOk')) return; sessionStorage.setItem('rcPushOk', '1');
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {}
+  };
+  var pn = 0, pi = setInterval(function () { pushTry(); if (++pn > 60) clearInterval(pi); }, 3000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) pushTry(); });
   /* 3) Installation de l'application */
   var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   if (standalone) return;
