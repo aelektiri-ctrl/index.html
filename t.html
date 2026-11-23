@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr" translate="no"><head>
+<meta name="google" content="notranslate"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Objet trouvé · Res·CUE</title><meta name="theme-color" content="#0b0f14"><link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="robots" content="noindex">
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#123326,#05090d 70%);color:#e8eef4;font:16px/1.5 -apple-system,Roboto,Segoe UI,sans-serif;padding:24px 18px 40px}
+.w{max-width:460px;margin:0 auto}.i{font-size:64px;text-align:center}h1{text-align:center;font-size:24px;margin:6px 0}.m{background:#0b141c;border:1px solid #1f5a3d;border-radius:14px;padding:14px;margin:16px 0;text-align:center;font-size:17px}
+p{color:#c6d4e0}input,textarea{width:100%;padding:13px;border-radius:12px;border:1px solid #1d2a36;background:#0b141c;color:#fff;font-size:16px;margin-bottom:10px}textarea{min-height:80px}
+button,.b{display:block;width:100%;padding:16px;border-radius:14px;border:0;background:#39d98a;color:#04110a;font-weight:700;font-size:17px;text-align:center;text-decoration:none;margin-top:6px}
+.b2{background:#0b141c;color:#39d98a;border:1px solid #39d98a}small{display:block;color:#8d9aa9;font-size:12px;margin-top:8px;text-align:center}.ok{font-size:60px;text-align:center}
+</style></head><body class="notranslate"><div class="w" id="w"><p style="text-align:center">Chargement…</p></div>
+<script>
+const SB='https://xkdratxyithahksnstdq.supabase.co',KEY='sb_publishable_BPJwC17Yiz_b6dtCsuVcng_6zH8yRAz';
+const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rpc=async(f,a)=>{const r=await fetch(`${SB}/rest/v1/rpc/rc_${f}`,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify(a)});const j=await r.json().catch(()=>null);if(!r.ok)throw new Error('ERR');if(j&&j.error)throw new Error(j.error);return j;};
+const I={Animal:'🐾',Clés:'🔑',Sac:'👜',Cartable:'🎒',Vélo:'🚲',Téléphone:'📱',Valise:'🧳',Voiture:'🚗',Autre:'🏷'};
+const code=(new URLSearchParams(location.search).get('c')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10);
+const W=document.getElementById('w');
+(async()=>{
+  let t=null;try{t=code?await rpc('tag_get',{p_code:code}):null;}catch{}
+  if(!t){W.innerHTML='<div class="i">🏷</div><h1>Médaille introuvable</h1><p style="text-align:center">Ce QR code n’est plus actif.</p><a class="b" href="/">Découvrir Res·CUE</a>';return;}
+  const an=t.kind==='Animal';
+  W.innerHTML=`<div class="i">${I[t.kind]||'🏷'}</div><h1>${an?'Vous avez trouvé':'Vous avez trouvé :'} ${e(t.label)}</h1>
+${t.msg?`<div class="m">« ${e(t.msg)} »</div>`:''}
+<p>Merci ! Prévenez son propriétaire en un geste. Il recevra une notification avec l’endroit où vous êtes. Votre numéro n’est partagé que si vous l’écrivez.</p>
+<textarea id="n" maxlength="300" placeholder="Un petit message (ex. Je l’ai trouvé devant la boulangerie, je reste 10 min)"></textarea>
+<input id="c" maxlength="80" placeholder="Votre téléphone ou prénom (facultatif)">
+<button id="go">📍 Prévenir le propriétaire</button><small>Votre position est demandée uniquement pour indiquer l’endroit au propriétaire.</small>`;
+  document.getElementById('go').onclick=async()=>{
+    const b=document.getElementById('go');b.disabled=true;b.textContent='Envoi…';
+    const p=await new Promise(r=>navigator.geolocation?navigator.geolocation.getCurrentPosition(x=>r(x.coords),()=>r(null),{enableHighAccuracy:true,timeout:12000}):r(null));
+    try{await rpc('tag_scan',{p_code:code,p_lat:p?p.latitude:null,p_lng:p?p.longitude:null,p_note:document.getElementById('n').value,p_contact:document.getElementById('c').value});
+      W.innerHTML=`<div class="ok">✅</div><h1>Le propriétaire est prévenu</h1><p style="text-align:center">Merci pour votre geste${p?'':' (sans position)'}. S’il vous a laissé un message, gardez cette page ouverte un instant.</p>
+<div class="m" style="font-size:15px">Vous aussi, protégez vos proches, vos animaux et vos objets.<br><b>Res·CUE</b> : l’entraide entre voisins, gratuite.</div><a class="b" href="/">Découvrir Res·CUE</a>`;}
+    catch(x){b.disabled=false;b.textContent='📍 Prévenir le propriétaire';alert(x.message==='RATE_LIMIT'?'Le propriétaire a déjà été prévenu il y a quelques minutes.':'Envoi impossible, réessayez.');}
+  };
+})();
+</script></body></html>

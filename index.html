@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr" translate="no">
+<head>
+<meta name="google" content="notranslate">
+<meta charset="utf-8">
+<script src="compat.js?v=1"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Res-CUE</title>
+<meta name="theme-color" content="#0b0f14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Le réseau d’urgence et d’entraide de ton quartier. Gratuit, sans compte, installable en 10 secondes.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Res-CUE">
+<meta property="og:title" content="Res-CUE · l’entraide d’urgence de ton quartier">
+<meta property="og:description" content="Un appel à l’aide, tes voisins arrivent. Gratuit, sans compte, installable en 10 secondes.">
+<meta property="og:url" content="https://res-cue.vercel.app/"><meta property="og:locale" content="fr_FR">
+<meta property="og:image" content="https://res-cue.vercel.app/og.png"><meta property="og:image:width" content="480"><meta property="og:image:height" content="252">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://res-cue.vercel.app/og.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#0b0f14;--pn:#141a22;--ln:#263241;--tx:#e9eff6;--mu:#8d9aa9;--ok:#39d98a;--red:#ff3b5c}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+#map{position:fixed;inset:0;z-index:0;background:var(--bg)}
+#top{position:fixed;inset:0 0 auto;z-index:5;display:flex;justify-content:space-between;align-items:flex-start;padding:calc(10px + env(safe-area-inset-top)) 14px 22px;background:linear-gradient(#0b0f14f2,#0b0f1400);pointer-events:none}
+.logo{font-size:21px;letter-spacing:.4px}.logo span,#onb h1 span{color:var(--red)}
+.attr{display:block;font-size:9px;color:var(--mu)}
+.pill{background:var(--pn);border:1px solid var(--ln);border-radius:99px;padding:5px 12px;font-size:13px}
+#banner{position:fixed;top:calc(58px + env(safe-area-inset-top));left:12px;right:12px;z-index:6;display:flex;justify-content:space-between;background:#10291f;border:1px solid var(--ok);border-radius:14px;padding:11px 14px;font-weight:700}
+#banner.late{background:#3a0f1a;border-color:var(--red)}
+#cards{position:fixed;left:0;right:0;bottom:calc(140px + env(safe-area-inset-bottom));z-index:5;display:flex;gap:10px;overflow-x:auto;padding:0 12px;scrollbar-width:none}
+.card{flex:0 0 80%;max-width:330px;text-align:left;background:var(--pn);border:1px solid var(--ln);border-left:5px solid var(--c);border-radius:14px;padding:10px 12px}
+.card b{display:block}.card small,.meta{color:var(--mu);font-size:13px}
+#dock{position:fixed;inset:auto 0 0;z-index:5;display:flex;justify-content:space-around;align-items:center;padding:14px 12px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(#0b0f1400,#0b0f14 55%)}
+.side{width:88px;background:none;border:0;display:flex;flex-direction:column;align-items:center}
+.side i{font-style:normal;font-size:26px;line-height:1.2}.side small{font-size:11px;color:var(--mu)}
+#sos{position:relative;width:104px;height:104px;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#ff7d93,var(--red) 58%,#b0142e);color:#fff;font-weight:800;font-size:23px;line-height:1.1;box-shadow:0 0 0 6px #ff3b5c33,0 8px 30px #ff3b5c66;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#sos small{display:block;font-size:9px;font-weight:700;letter-spacing:.8px;opacity:.9}
+#sos svg{position:absolute;inset:-9px;width:calc(100% + 18px);height:calc(100% + 18px);transform:rotate(-90deg);pointer-events:none}
+#sos circle{fill:none;stroke:#fff;stroke-width:4;stroke-linecap:round;stroke-dasharray:289;stroke-dashoffset:289}
+#sos.hold circle{transition:stroke-dashoffset 1.5s linear;stroke-dashoffset:0}
+#sos.live{font-size:17px;animation:glow 1.2s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 18px #ff3b5c1f,0 8px 44px #ff3b5c}}
+#sheet{position:fixed;inset:auto 0 0;z-index:8;max-height:80vh;display:flex;flex-direction:column;background:var(--pn);border-top:1px solid var(--ln);border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px #000b}
+#x{position:absolute;top:10px;right:12px;z-index:1;width:36px;height:36px;border-radius:50%;border:0;background:var(--ln)}
+#sheetBody{display:flex;flex-direction:column;gap:11px;overflow-y:auto}
+#aHead{display:flex;flex-direction:column;gap:5px}
+h2{font-size:21px;padding-right:44px}
+.lvl{color:var(--c);font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.7px;padding-right:44px}
+.warn{background:#3a0f1a;border-radius:10px;padding:8px 10px;font-size:13px}
+.chips,.acts{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:none;border:1.5px solid var(--c,var(--ln));border-radius:99px;padding:10px 15px}
+.chip.on{background:var(--ok);border-color:var(--ok);color:#06210f;font-weight:700}
+.btn{flex:1 1 auto;text-align:center;text-decoration:none;background:var(--ln);color:var(--tx);border:0;border-radius:13px;padding:14px 16px;font-weight:700}
+.btn.ok{background:var(--ok);color:#06210f}.btn.red{background:var(--red);color:#fff}.btn.ghost{background:none;box-shadow:inset 0 0 0 1.5px var(--ln)}
+input{width:100%;background:var(--bg);border:1.5px solid var(--ln);border-radius:13px;padding:13px 14px;color:var(--tx);font:inherit;font-size:16px;outline:0}
+input:focus{border-color:var(--ok)}
+#pin{text-align:center;letter-spacing:8px;-webkit-text-security:disc}
+#pin::placeholder{letter-spacing:0}
+#msgs{display:flex;flex-direction:column;gap:6px;max-height:27vh;overflow-y:auto}
+.msg{align-self:flex-start;max-width:84%;background:var(--bg);border-radius:14px 14px 14px 4px;padding:7px 11px;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:#1c4a8a;border-radius:14px 14px 4px 14px}
+.msg small{display:block;color:var(--mu);font-size:11px}
+#chat{display:flex;gap:8px}#chat .btn{flex:0 0 auto}
+#onb{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;justify-content:center;gap:16px;padding:28px;background:radial-gradient(circle at 50% 18%,#3a0f1a,var(--bg) 60%)}
+#onb h1{font-size:40px;letter-spacing:.5px}
+#toast{position:fixed;left:50%;top:calc(112px + env(safe-area-inset-top));transform:translateX(-50%);z-index:30;width:max-content;max-width:88%;background:#fff;color:#0b0f14;border-radius:12px;padding:10px 16px;font-weight:700;text-align:center}
+.pulse{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{stroke-opacity:.25}}
+</style>
+<link rel="stylesheet" href="fx.css?v=4">
+<link rel="stylesheet" href="fx2.css?v=4">
+</head>
+<body class="notranslate">
+<div id="map"></div>
+<header id="top">
+  <div><b class="logo">Res<span>·</span>CUE</b><small class="attr">© OpenStreetMap</small></div>
+  <div class="hb"><button id="bell" class="pill" hidden aria-label="Activer les alertes">🔔 Alertes</button><button id="more" class="pill">✦ Plus</button><span id="status" class="pill">Connexion…</span></div>
+</header>
+<button id="banner" hidden></button>
+<div id="cards"></div><div id="calm"><i class="eye"></i><div><b>Quartier calme</b><small>Aucun appel à l’aide autour de toi. Plus vous êtes de voisins, plus l’aide arrive vite.</small></div><button id="inv" type="button">Inviter</button></div>
+<nav id="dock">
+  <button id="bSent" class="side"><i><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.6-3 8.3-7 10-4-1.7-7-5.4-7-10V6z"/><path d="M9 12l2.2 2.2L15 10"/></svg></i><small>Sentinelle</small></button>
+  <button id="sos" aria-label="Lancer une alerte : maintenir 1,5 seconde"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg><span id="sosT">SOS<small>MAINTENIR</small></span></button>
+  <button id="bMe" class="side"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></i><small>Ma position</small></button>
+</nav>
+<section id="sheet" hidden><button id="x" aria-label="Fermer">✕</button><div id="sheetBody"></div></section>
+<form id="onb" hidden>
+  <div class="hero"><i></i><i></i><i></i><b></b></div>
+  <h1>Res<span>·</span>CUE</h1>
+  <p class="tag">Le réseau d’urgence et d’entraide de ton quartier.</p>
+  <ul class="feat"><li>Alerte en deux gestes, du simple pépin à l’urgence vitale</li><li>Tes voisins guidés jusqu’à toi, avec chat en direct</li><li>Mode Sentinelle pour tes trajets en solo</li></ul>
+  <input id="name" maxlength="30" placeholder="Ton prénom" autocomplete="given-name">
+  <label class="terms"><input type="checkbox" id="terms"><span>J’ai 16 ans ou plus et j’accepte les <a href="#" id="cguLink">règles d’utilisation</a>. Mon adresse IP est enregistrée pour la sécurité de tous.</span></label>
+  <button class="btn ok">Rejoindre mon quartier</button>
+  <p class="meta">Ta position n’est enregistrée que pendant une alerte ou une Sentinelle active. En cas de danger grave, appelle d’abord le 112.</p>
+  <p class="meta">Pour l’installer : iPhone, Safari → Partager → « Sur l’écran d’accueil ». Android, Chrome → ⋮ → « Installer l’application ».</p>
+</form>
+<section id="cgu" class="ov" hidden><button class="x" id="cguX" aria-label="Fermer">✕</button>
+<h2>Règles d’utilisation</h2><p>Version 1. En utilisant Res·CUE tu acceptes ce qui suit.</p>
+<h3>1. Ce que c’est</h3><p>Res·CUE met en relation des voisins bénévoles pour s’entraider. Ce n’est pas un service de secours officiel et rien ne garantit qu’un voisin répondra.</p>
+<h3>2. Urgence vitale</h3><p>En cas de danger grave, appelle d’abord le 112 (15 SAMU, 17 Police, 18 Pompiers). Res·CUE ne les remplace jamais.</p>
+<h3>3. Tes engagements</h3><ul><li>Ne déclenche jamais de fausse alerte ni d’alerte pour plaisanter.</li><li>Pas de harcèlement, menace, contenu illégal ou haineux, ni d’usage pour nuire à quelqu’un.</li><li>Ne te mets pas en danger : aide seulement si tu peux le faire sans risque.</li><li>Un compte abusif peut être bloqué sans préavis.</li></ul>
+<h3>4. Responsabilité</h3><p>Les utilisateurs sont des particuliers indépendants. L’éditeur n’est pas responsable de leurs actes, de leur absence de réponse ni des conséquences d’une aide apportée ou refusée, dans les limites permises par la loi. Tu restes responsable de ton usage.</p>
+<h3>5. Données et traçabilité</h3><ul><li>Données utilisées : prénom, position (pendant une alerte, une Sentinelle et à l’ouverture de l’app), messages d’alerte, abonnement aux notifications.</li><li>Ton adresse IP et la date de tes actions (inscription, ouverture, alerte, réponse, message) sont enregistrées et conservées 12 mois, pour la sécurité des utilisateurs et pour répondre à toute demande légale.</li><li>Ces informations peuvent être transmises aux autorités judiciaires sur réquisition. Tes données ne sont jamais vendues.</li><li>Tu peux demander l’accès ou la suppression de tes données via le formulaire de l’espace Plus, dans les limites des obligations légales.</li></ul>
+<h3>6. Notifications</h3><p>Tu peux recevoir des notifications d’alerte de voisins proches. Tu peux les couper dans les réglages de ton téléphone.</p>
+<button class="btn ok" id="cguX2" type="button" style="margin-top:14px;width:100%" onclick="document.getElementById('cgu').hidden=true">J’ai compris</button></section>
+<section id="plus" class="ov" hidden><button class="x" id="plusX" aria-label="Fermer">✕</button>
+<h2>✦ Res·CUE Plus</h2><p>L’aide entre voisins reste gratuite, toujours. Voici ce qui arrive :</p>
+<div class="plan"><b>Res·CUE+ <em>3,99 €/mois</em></b><small>Cercle de proches prévenus en priorité, Sentinelle illimitée, historique, badge.</small></div>
+<div class="plan" style="--c:#3d9bff"><b>Pro vérifié <em>19 €/mois</em></b><small>Artisans, dépanneurs, serruriers : sois mis en avant sur les demandes de dépannage près de toi.</small></div>
+<div class="plan" style="--c:#f5c542"><b>Entreprise <em>5 €/salarié/mois</em></b><small>Protection des travailleurs isolés : Sentinelle d’équipe et tableau de bord.</small></div>
+<div class="plan" style="--c:#ff3b5c"><b>Commune, copropriété, campus <em>sur devis</em></b><small>Réseau d’entraide dédié, statistiques et relais d’information.</small></div>
+<form id="lead"><select name="kind"><option value="plus">Res·CUE+ (particulier)</option><option value="pro">Pro vérifié</option><option value="business">Entreprise</option><option value="commune">Commune / copropriété / campus</option><option value="partner">Partenaire / sponsor local</option><option value="invest">Investisseur / rachat</option></select><input name="name" placeholder="Ton nom" maxlength="80"><input name="email" type="email" placeholder="Email" maxlength="120"><input name="phone" type="tel" placeholder="Téléphone (facultatif)" maxlength="30"><textarea name="msg" placeholder="Ton besoin (facultatif)" maxlength="600"></textarea><button class="btn ok">Être prévenu en priorité</button></form>
+<h3>Je peux aider avec…</h3><p>Choisis tes compétences. Elles aideront à mieux te solliciter.</p><div id="skills" class="chips"></div>
+<h3>Autour de moi</h3><div class="acts"><button class="btn" id="share" type="button">Inviter mes voisins</button><button class="btn ghost" id="cguLink2" type="button">Règles d’utilisation</button></div></section>
+<div id="toast" hidden></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="fx.js?v=4"></script>
+<script src="fx2.js?v=4"></script>
+<script type="module" src="app.js?v=4"></script>
+</body>
+</html>

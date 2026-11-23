@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr" translate="no">
+<head>
+<meta name="google" content="notranslate">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Res·CUE est de retour — Merci</title>
+<meta name="description" content="Res·CUE est de nouveau 100 % en ligne. Merci pour votre patience.">
+<meta property="og:title" content="Res·CUE est de retour, 100 % en ligne">
+<meta property="og:description" content="Nos équipes vous remercient de votre patience. Nouvelle interface, alertes plus rapides, et mise à jour automatique.">
+<meta property="og:image" content="/og.png">
+<meta name="theme-color" content="#070b10">
+<link rel="icon" href="/icon.svg">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#070b10;color:#d7e3ee;font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;overflow-x:hidden;min-height:100vh}
+canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+body::before{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(57,217,138,.04) 0 1px,transparent 1px 3px)}
+body::after{content:"";position:fixed;left:0;right:0;height:120px;top:-120px;z-index:1;pointer-events:none;background:linear-gradient(transparent,rgba(57,217,138,.12),transparent);animation:sweep 5s linear infinite}
+@keyframes sweep{to{top:100%}}
+main{position:relative;z-index:2;max-width:640px;margin:0 auto;padding:56px 22px 48px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.logo{width:96px;height:96px;margin-bottom:18px;filter:drop-shadow(0 0 18px rgba(57,217,138,.45))}
+.tag{font-size:12px;letter-spacing:.25em;color:#39d98a;border:1px solid #1f5a3d;padding:5px 12px;border-radius:99px;background:rgba(57,217,138,.06)}
+.tag i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#39d98a;margin-right:8px;box-shadow:0 0 10px #39d98a;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+h1{font-size:clamp(30px,8vw,46px);line-height:1.1;margin:22px 0 6px;color:#fff;letter-spacing:-.01em}
+h1 b{color:#39d98a;text-shadow:0 0 22px rgba(57,217,138,.5)}
+.pct{font-size:clamp(54px,16vw,92px);font-weight:700;color:#39d98a;text-shadow:0 0 30px rgba(57,217,138,.55);margin:8px 0 2px}
+.bar{width:100%;max-width:420px;height:8px;border:1px solid #1f5a3d;border-radius:99px;overflow:hidden;margin:6px 0 26px;background:#0b141c}
+.bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#1f8f5a,#39d98a);box-shadow:0 0 14px #39d98a;transition:width 2.4s cubic-bezier(.2,.8,.2,1)}
+.term{width:100%;text-align:left;background:rgba(11,20,28,.86);border:1px solid #1d3a2c;border-radius:14px;padding:18px 18px 16px;font-size:14px;line-height:1.7;box-shadow:0 0 40px rgba(57,217,138,.08)}
+.term .l{color:#5d7a6b}
+.term .ok{color:#39d98a}
+.msg{margin:28px 0 8px;font-size:16px;line-height:1.75;color:#c6d4e0}
+.msg strong{color:#fff}
+.sign{margin:18px 0 30px;color:#39d98a;font-size:15px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin:6px 0 30px}
+.grid div{background:rgba(11,20,28,.86);border:1px solid #1d3a2c;border-radius:12px;padding:14px 12px;text-align:left;font-size:13px;line-height:1.5}
+.grid b{display:block;color:#39d98a;font-size:14px;margin-bottom:3px}
+.cta{display:inline-block;background:#39d98a;color:#04110a;font-weight:700;font-size:17px;padding:16px 34px;border-radius:14px;text-decoration:none;box-shadow:0 0 28px rgba(57,217,138,.45);letter-spacing:.02em}
+.cta:active{transform:scale(.98)}
+.share{margin-top:14px;background:none;border:1px solid #1f5a3d;color:#39d98a;font:inherit;font-size:14px;padding:11px 22px;border-radius:12px;cursor:pointer}
+small.f{display:block;margin-top:34px;color:#5d7a6b;font-size:11px;letter-spacing:.08em}
+@media (max-width:420px){.grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){body::after,.tag i{animation:none}}
+</style>
+</head>
+<body class="notranslate">
+<canvas id="c"></canvas>
+<main>
+  <img class="logo" src="/icon.svg" alt="Res·CUE">
+  <div class="tag"><i></i>SYSTÈME OPÉRATIONNEL</div>
+  <h1>Res·<b>CUE</b> est de retour</h1>
+  <div class="pct" id="pct">0%</div>
+  <div class="bar"><span id="bar"></span></div>
+
+  <div class="term" id="term"></div>
+
+  <p class="msg">
+    Pendant quelques jours, Res·CUE a été partiellement indisponible.<br>
+    <strong>Nos équipes vous remercient de votre compréhension et de votre patience.</strong><br><br>
+    Nous avons mis ce temps à profit pour reconstruire l’application en profondeur&nbsp;: elle est aujourd’hui <strong>100&nbsp;% en ligne</strong>, plus rapide, plus fiable, et prête à vous accompagner quand chaque seconde compte.
+  </p>
+
+  <div class="grid">
+    <div><b>▸ Nouvelle interface</b>Radar, carte en mode nuit et zoom direct sur l’alerte.</div>
+    <div><b>▸ Alertes instantanées</b>Les voisins proches sont prévenus, même application fermée.</div>
+    <div><b>▸ Mise à jour automatique</b>Rien à réinstaller&nbsp;: vous avez déjà la dernière version.</div>
+    <div><b>▸ Entraide notée</b>Remerciez et notez le voisin venu vous aider.</div>
+  </div>
+
+  <p class="sign">— L’équipe Res·CUE, merci d’être là.</p>
+
+  <a class="cta" href="/">Ouvrir Res·CUE</a>
+  <button class="share" id="sh" type="button">Partager la nouvelle</button>
+
+  <small class="f">RES·CUE — LE RÉSEAU D’ENTRAIDE ET D’URGENCE DE VOTRE QUARTIER</small>
+</main>
+<script>
+(() => {
+  // fond animé : radar + points de voisins
+  const c = document.getElementById('c'), x = c.getContext('2d'); let w, h, dpr, pts = [];
+  const rs = () => { dpr = Math.min(devicePixelRatio || 1, 2); w = innerWidth; h = innerHeight; c.width = w * dpr; c.height = h * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    pts = Array.from({length: Math.round(w * h / 22000) + 14}, () => ({a: Math.random() * 6.283, r: Math.random(), s: 0})); };
+  rs(); addEventListener('resize', rs);
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches; let t = 0;
+  const fr = () => {
+    const cx = w / 2, cy = h * .42, R = Math.hypot(w, h) * .55;
+    x.fillStyle = 'rgba(7,11,16,.22)'; x.fillRect(0, 0, w, h);
+    x.strokeStyle = 'rgba(57,217,138,.10)'; x.lineWidth = 1;
+    for (let i = 1; i <= 6; i++) { x.beginPath(); x.arc(cx, cy, R * i / 6, 0, 6.283); x.stroke(); }
+    x.beginPath(); x.moveTo(cx - R, cy); x.lineTo(cx + R, cy); x.moveTo(cx, cy - R); x.lineTo(cx, cy + R); x.stroke();
+    const ang = t % 6.283;
+    const g = x.createConicGradient ? x.createConicGradient(ang - .6, cx, cy) : null;
+    if (g) { g.addColorStop(0, 'rgba(57,217,138,0)'); g.addColorStop(.095, 'rgba(57,217,138,.20)'); g.addColorStop(.1, 'rgba(57,217,138,0)');
+      x.fillStyle = g; x.beginPath(); x.arc(cx, cy, R, 0, 6.283); x.fill(); }
+    pts.forEach(p => {
+      let d = (ang - p.a) % 6.283; if (d < 0) d += 6.283; if (d < .06) p.s = 1;
+      const px = cx + Math.cos(p.a) * p.r * R * .8, py = cy + Math.sin(p.a) * p.r * R * .8;
+      x.fillStyle = `rgba(57,217,138,${.12 + p.s * .85})`; x.beginPath(); x.arc(px, py, 2 + p.s * 2.5, 0, 6.283); x.fill();
+      p.s *= .985;
+    });
+    t += .012; if (!still) requestAnimationFrame(fr);
+  };
+  fr();
+
+  // compteur 0 → 100 %
+  const P = document.getElementById('pct'), B = document.getElementById('bar'); let v = 0;
+  setTimeout(() => { B.style.width = '100%'; }, 300);
+  const up = () => { v = Math.min(100, v + 2); P.textContent = v + '%'; if (v < 100) setTimeout(up, 40); }; setTimeout(up, 300);
+
+  // console qui se tape
+  const L = [['> connexion au réseau Res·CUE', 'l'], ['> serveurs ......................... OK', 'ok'], ['> géolocalisation ................. OK', 'ok'], ['> alertes temps réel .............. OK', 'ok'], ['> notifications voisins ........... OK', 'ok'], ['> statut : 100 % EN LIGNE ✔', 'ok']];
+  const T = document.getElementById('term'); let i = 0;
+  const line = () => { if (i >= L.length) return; const d = document.createElement('div'); d.className = L[i][1]; T.appendChild(d);
+    const s = L[i][0]; let k = 0; const ty = () => { d.textContent = s.slice(0, ++k); if (k < s.length) setTimeout(ty, 18); else { i++; setTimeout(line, 160); } }; ty(); };
+  setTimeout(line, 500);
+
+  // partage
+  document.getElementById('sh').onclick = async () => {
+    const u = location.origin + '/merci', m = 'Res·CUE est de retour, 100 % en ligne ! Le réseau d’entraide de notre quartier : ';
+    try { if (navigator.share) await navigator.share({title: 'Res·CUE est de retour', text: m, url: u}); else { await navigator.clipboard.writeText(m + u); document.getElementById('sh').textContent = 'Lien copié ✔'; } } catch {}
+  };
+})();
+</script>
+</body>
+</html>

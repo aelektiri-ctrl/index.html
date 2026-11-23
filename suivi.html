@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr" translate="no"><head>
+<meta name="google" content="notranslate"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Suivi en direct · Res·CUE</title><meta name="theme-color" content="#0b0f14"><link rel="icon" href="icon.svg" type="image/svg+xml"><meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>html,body{margin:0;height:100%;background:#05090d;color:#e8eef4;font:15px/1.4 -apple-system,Roboto,sans-serif}#m{position:absolute;inset:0}
+#b{position:absolute;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:999;background:#0b141cf2;border:1px solid #1f5a3d;border-radius:16px;padding:14px}
+#b b{font-size:17px}#b small{display:block;color:#8d9aa9;margin-top:4px}#b a{display:block;margin-top:10px;padding:12px;border-radius:12px;background:#39d98a;color:#04110a;text-align:center;font-weight:700;text-decoration:none}</style></head>
+<body class="notranslate"><div id="m"></div><div id="b"><b>Chargement…</b></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const SB='https://xkdratxyithahksnstdq.supabase.co',KEY='sb_publishable_BPJwC17Yiz_b6dtCsuVcng_6zH8yRAz';
+const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const id=(new URLSearchParams(location.search).get('id')||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12);
+const B=document.getElementById('b');let map=null,mk=null,first=true;
+const ago=t=>{const s=Math.round((Date.now()-Date.parse(t))/1000);return s<60?`il y a ${s} s`:s<3600?`il y a ${Math.floor(s/60)} min`:`il y a ${Math.floor(s/3600)} h`;};
+async function tick(){
+  let d=null;try{const r=await fetch(`${SB}/rest/v1/rpc/rc_track_get`,{method:'POST',headers:{apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'},body:JSON.stringify({p_id:id})});d=await r.json();}catch{}
+  if(!d){B.innerHTML='<b>Ce partage est terminé</b><small>La personne a arrêté le partage de sa position.</small><a href="/">Découvrir Res·CUE</a>';return;}
+  if(!map){map=L.map('m',{zoomControl:false}).setView([d.lat||46.6,d.lng||2.3],d.lat?16:5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);}
+  if(d.lat!=null){const ll=[d.lat,d.lng];if(!mk)mk=L.circleMarker(ll,{radius:11,color:'#fff',weight:3,fillColor:'#39d98a',fillOpacity:1}).addTo(map);else mk.setLatLng(ll);if(first){map.setView(ll,16);first=false;}else map.panTo(ll);}
+  if(!d.active){B.innerHTML=`<b>Partage terminé</b><small>Dernière position de ${e(d.name)} ${d.upd?ago(d.upd):''}.</small><a href="/">Découvrir Res·CUE</a>`;return;}
+  B.innerHTML=`<b>🟢 ${e(d.name)} partage sa position</b><small>${d.upd?'Mise à jour '+ago(d.upd):'En attente de la première position…'} · jusqu’à ${new Date(d.until).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</small>${d.lat!=null?`<a href="https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}" target="_blank" rel="noopener">Itinéraire jusqu’à ${e(d.name)}</a>`:''}`;
+  setTimeout(tick,10000);
+}
+if(id)tick();else B.innerHTML='<b>Lien incomplet</b>';
+</script></body></html>
