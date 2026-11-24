@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr" translate="no"><head>
+<meta name="google" content="notranslate"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fiche Res·CUE</title><meta name="theme-color" content="#0b0f14"><link rel="icon" href="icon.svg" type="image/svg+xml"><meta name="robots" content="noindex">
+<style>*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#123326,#05090d 70%);color:#e8eef4;font:16px/1.5 -apple-system,Roboto,Segoe UI,sans-serif;padding:28px 18px 40px}
+.w{max-width:440px;margin:0 auto;text-align:center}.ph{width:150px;height:150px;border-radius:50%;object-fit:cover;border:4px solid #39d98a;background:#17212c}h1{margin:12px 0 4px;font-size:28px}
+.r{display:flex;justify-content:space-between;gap:12px;background:#0b141c;border:1px solid #1d2a36;border-radius:12px;padding:12px 14px;margin:8px 0;text-align:left}.r span:first-child{color:#8d9aa9}
+a.b,button{display:block;width:100%;padding:15px;border-radius:14px;border:0;background:#39d98a;color:#04110a;font-weight:700;font-size:16px;text-decoration:none;margin-top:10px}button{background:#17212c;color:#39d98a;border:1px solid #39d98a}small{display:block;color:#8d9aa9;margin-top:14px;font-size:12px}</style></head>
+<body class="notranslate"><div class="w" id="w">Chargement…</div>
+<script>
+var SB='https://xkdratxyithahksnstdq.supabase.co',KEY='sb_publishable_BPJwC17Yiz_b6dtCsuVcng_6zH8yRAz';
+function e(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+var id=(new URLSearchParams(location.search).get('id')||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12),W=document.getElementById('w');
+fetch(SB+'/rest/v1/rpc/rc_fiche_get',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({p_id:id})}).then(function(r){return r.json()}).then(function(f){
+ if(!f||!f.prenom&&!f.photo){W.innerHTML='<h1>Fiche introuvable</h1><a class="b" href="/">Découvrir Res·CUE</a>';return}
+ var tel=(f.tel||'').replace(/[^+0-9]/g,'');
+ W.innerHTML=(f.photo?'<img class="ph" src="'+e(f.photo)+'" alt="">':'<div style="font-size:90px">👤</div>')+'<h1>'+e(f.prenom||'')+'</h1><p style="color:#8d9aa9;margin:0 0 10px">Fiche d’identification Res·CUE</p>'
+  +(f.vehicule?'<div class="r"><span>🚗 Véhicule</span><span>'+e(f.vehicule)+'</span></div>':'')+(f.plaque?'<div class="r"><span>🔢 Plaque</span><span>'+e(f.plaque)+'</span></div>':'')
+  +(f.note?'<div class="r"><span>👀 Signe distinctif</span><span>'+e(f.note)+'</span></div>':'')
+  +(tel?'<a class="b" href="tel:'+e(tel)+'">📞 Appeler '+e(f.prenom||'')+'</a>':'')
+  +'<button id="sh">📤 Transmettre cette fiche à un proche</button><small>Mise à jour le '+new Date(f.updated_at).toLocaleDateString('fr-FR')+'. En cas de doute ou de danger, appelle le 112.</small>';
+ document.getElementById('sh').onclick=function(){var t='Fiche Res·CUE de '+(f.prenom||'')+' : '+location.href;if(navigator.share)navigator.share({title:'Fiche Res·CUE',text:t,url:location.href}).catch(function(){});else{navigator.clipboard.writeText(t);alert('Lien copié')}};
+}).catch(function(){W.innerHTML='<h1>Connexion impossible</h1><p>Réessaie dans un instant.</p>'});
+</script></body></html>
