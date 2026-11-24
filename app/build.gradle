@@ -1,0 +1,10 @@
+plugins { id 'com.android.application' }
+android {
+  namespace 'app.rescue.twa'
+  compileSdk 34
+  defaultConfig { applicationId 'app.rescue.twa'; minSdk 21; targetSdk 34; versionCode 1; versionName '1.0' }
+  signingConfigs { rel { storeFile file('/tmp/rc.jks'); storePassword System.getenv('KSP'); keyAlias 'rescue'; keyPassword System.getenv('KSP') } }
+  buildTypes { release { minifyEnabled false; signingConfig signingConfigs.rel } }
+  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+dependencies { implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0' }

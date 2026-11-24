@@ -1,0 +1,4 @@
+<resources>
+  <color name="bg">#0b0f14</color>
+  <string name="asset_statements">[{\"relation\":[\"delegate_permission/common.handle_all_urls\"],\"target\":{\"namespace\":\"web\",\"site\":\"https://res-cue.vercel.app\"}}]</string>
+</resources>
