@@ -1,0 +1,1 @@
+(()=>{const add=()=>{const h=document.querySelector("#top .hb");if(!h)return setTimeout(add,800);document.getElementById("rcBeta")||h.insertAdjacentHTML("afterbegin",'<span id="rcBeta" class="pill" style="background:#8338ec;border-color:#8338ec;color:#fff">🧪 Test</span>')};add()})();
