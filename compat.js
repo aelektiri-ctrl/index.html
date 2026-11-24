@@ -32,6 +32,30 @@
     scan(document.documentElement);
     document.addEventListener('DOMContentLoaded', function () { scan(document.documentElement); });
   }
+  /* 1b) Autorisation de position « en mémoire » : si le navigateur ne l'a pas gardée (« cette fois uniquement », Safari…),
+     l'appli ne redemande pas à chaque ouverture : elle reprend la dernière position connue, et ne redemande
+     que si l'utilisateur touche lui-même un bouton, au plus une fois toutes les 12 h. */
+  try {
+    var G = navigator.geolocation;
+    if (G) {
+      var gs = 'unknown';
+      try { navigator.permissions.query({name: 'geolocation'}).then(function (st) { gs = st.state; st.onchange = function () { gs = st.state; }; }); } catch (e) {}
+      var lastP = function () { try { var s = JSON.parse(localStorage.getItem('rcPos') || 'null'); return s ? {coords: {latitude: s.lat, longitude: s.lng, accuracy: s.acc || 50}, timestamp: s.t} : null; } catch (e) { return null; } };
+      var act = function () { try { return !!(navigator.userActivation && navigator.userActivation.isActive); } catch (e) { return false; } };
+      var quiet = function () { if (gs === 'granted') return false; var a = 0; try { a = +localStorage.getItem('rcGeoAskAt') || 0; } catch (e) {} return Date.now() - a < 432e5 && !act(); };
+      var mark = function () { if (gs !== 'granted') try { localStorage.setItem('rcGeoAskAt', String(Date.now())); } catch (e) {} };
+      var save = function (p) { try { localStorage.setItem('rcPos', JSON.stringify({lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, t: p.timestamp || Date.now()})); } catch (e) {} };
+      var oc = G.getCurrentPosition.bind(G), ow = G.watchPosition.bind(G);
+      G.getCurrentPosition = function (ok, ko, o) {
+        if (quiet()) { var l = lastP(); setTimeout(function () { if (l) ok(l); else if (ko) ko({code: 1, message: 'quiet'}); }, 0); return; }
+        mark(); oc(function (p) { save(p); ok(p); }, ko, o);
+      };
+      G.watchPosition = function (ok, ko, o) {
+        if (quiet()) { var l = lastP(); if (l) setTimeout(function () { ok(l); }, 0); return 0; }
+        mark(); return ow(function (p) { save(p); ok(p); }, ko, o);
+      };
+    }
+  } catch (e) {}
   /* 2) hauteur réelle de l'écran (barres du navigateur) */
   var vh = function () { document.documentElement.style.setProperty('--vh', window.innerHeight + 'px'); };
   vh(); window.addEventListener('resize', vh);
